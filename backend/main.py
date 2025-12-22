@@ -12,6 +12,8 @@ import asyncio
 from . import storage
 from . import config
 from .council import run_full_council, generate_conversation_title, stage1_collect_responses, stage2_collect_rankings, stage3_synthesize_final, calculate_aggregate_rankings
+from .export import export_to_markdown, export_to_json, export_to_html
+from .pricing import estimate_query_cost, format_cost
 
 app = FastAPI(title="LLM Council API")
 
@@ -39,6 +41,11 @@ class ConfigUpdateRequest(BaseModel):
     """Request to update council configuration."""
     council_models: List[str]
     chairman_model: str
+
+
+class CostEstimateRequest(BaseModel):
+    """Request to estimate cost of a query."""
+    content: str
 
 
 class ConversationMetadata(BaseModel):
@@ -83,6 +90,39 @@ async def update_config(request: ConfigUpdateRequest):
         "status": "success",
         "council_models": config.COUNCIL_MODELS,
         "chairman_model": config.CHAIRMAN_MODEL
+    }
+
+
+@app.post("/api/estimate-cost")
+async def estimate_cost(request: CostEstimateRequest):
+    """
+    Estimate the cost of running a query through the council.
+
+    Args:
+        request: Request with message content
+
+    Returns:
+        Cost estimate breakdown
+    """
+    # Get current council models - Stage 1 + Stage 2 + Stage 3
+    all_models = config.COUNCIL_MODELS + config.COUNCIL_MODELS + [config.CHAIRMAN_MODEL]
+
+    estimate = estimate_query_cost(
+        all_models,
+        request.content,
+        estimated_response_tokens=500  # Conservative estimate
+    )
+
+    return {
+        "estimated_cost": estimate["total"],
+        "formatted_cost": format_cost(estimate["total"]),
+        "prompt_tokens": estimate["prompt_tokens"],
+        "estimated_response_tokens": estimate["estimated_response_tokens"],
+        "breakdown": {
+            "stage1_cost": sum(estimate["models"].get(m, 0) for m in config.COUNCIL_MODELS),
+            "stage2_cost": sum(estimate["models"].get(m, 0) for m in config.COUNCIL_MODELS),
+            "stage3_cost": estimate["models"].get(config.CHAIRMAN_MODEL, 0)
+        }
     }
 
 
@@ -174,6 +214,63 @@ async def get_conversation(conversation_id: str):
     if conversation is None:
         raise HTTPException(status_code=404, detail="Conversation not found")
     return conversation
+
+
+@app.get("/api/conversations/{conversation_id}/export")
+async def export_conversation(conversation_id: str, format: str = "markdown"):
+    """
+    Export a conversation in various formats.
+
+    Args:
+        conversation_id: The conversation ID
+        format: Export format (markdown, json, html)
+
+    Returns:
+        File download with appropriate content type
+    """
+    from fastapi.responses import Response
+
+    conversation = storage.get_conversation(conversation_id)
+    if conversation is None:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+
+    # Sanitize title for filename
+    title = conversation.get('title', 'conversation')
+    safe_title = "".join(c if c.isalnum() or c in (' ', '-', '_') else '_' for c in title)
+    safe_title = safe_title.replace(' ', '_')[:50]  # Limit length
+
+    if format == "markdown" or format == "md":
+        content = export_to_markdown(conversation)
+        return Response(
+            content=content,
+            media_type="text/markdown",
+            headers={
+                "Content-Disposition": f'attachment; filename="{safe_title}.md"'
+            }
+        )
+
+    elif format == "json":
+        content = export_to_json(conversation, pretty=True)
+        return Response(
+            content=content,
+            media_type="application/json",
+            headers={
+                "Content-Disposition": f'attachment; filename="{safe_title}.json"'
+            }
+        )
+
+    elif format == "html":
+        content = export_to_html(conversation)
+        return Response(
+            content=content,
+            media_type="text/html",
+            headers={
+                "Content-Disposition": f'attachment; filename="{safe_title}.html"'
+            }
+        )
+
+    else:
+        raise HTTPException(status_code=400, detail=f"Unsupported format: {format}. Use 'markdown', 'json', or 'html'.")
 
 
 @app.post("/api/conversations/{conversation_id}/message")

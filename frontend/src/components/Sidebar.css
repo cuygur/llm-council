@@ -72,11 +72,13 @@
 }
 
 .conversation-item {
-  padding: 12px;
+  padding: 8px;
   margin-bottom: 4px;
   border-radius: 6px;
-  cursor: pointer;
   transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .conversation-item:hover {
@@ -86,6 +88,30 @@
 .conversation-item.active {
   background: #e8f0fe;
   border: 1px solid #4a90e2;
+}
+
+.conversation-content {
+  flex: 1;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.export-btn {
+  background: none;
+  border: none;
+  font-size: 16px;
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 4px;
+  opacity: 0.6;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.export-btn:hover {
+  opacity: 1;
+  background: #e0e0e0;
+  transform: scale(1.1);
 }
 
 .conversation-title {

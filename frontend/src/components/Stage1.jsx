@@ -26,7 +26,26 @@ export default function Stage1({ responses }) {
       </div>
 
       <div className="tab-content">
-        <div className="model-name">{responses[activeTab].model}</div>
+        <div className="model-name">
+          {responses[activeTab].model}
+          {responses[activeTab].is_reasoning_model && (
+            <span className="reasoning-badge" title="Reasoning model with extended thinking">
+              🧠 Reasoning Model
+            </span>
+          )}
+        </div>
+
+        {responses[activeTab].thinking && responses[activeTab].thinking.length > 50 && (
+          <details className="thinking-section">
+            <summary className="thinking-summary">
+              💭 Show Thinking Process ({Math.round(responses[activeTab].thinking.length / 4)} tokens)
+            </summary>
+            <div className="thinking-content markdown-content">
+              <ReactMarkdown>{responses[activeTab].thinking}</ReactMarkdown>
+            </div>
+          </details>
+        )}
+
         <div className="response-text markdown-content">
           <ReactMarkdown>{responses[activeTab].response}</ReactMarkdown>
         </div>

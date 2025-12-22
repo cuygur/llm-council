@@ -3,6 +3,7 @@
 from typing import List, Dict, Any, Tuple
 from .openrouter import query_models_parallel, query_model
 from .config import COUNCIL_MODELS, CHAIRMAN_MODEL
+from .pricing import calculate_cost
 
 
 async def stage1_collect_responses(user_query: str) -> List[Dict[str, Any]]:
@@ -24,9 +25,20 @@ async def stage1_collect_responses(user_query: str) -> List[Dict[str, Any]]:
     stage1_results = []
     for model, response in responses.items():
         if response is not None:  # Only include successful responses
+            usage = response.get('usage', {})
+            cost = calculate_cost(
+                model,
+                usage.get('prompt_tokens', 0),
+                usage.get('completion_tokens', 0)
+            )
+
             stage1_results.append({
                 "model": model,
-                "response": response.get('content', '')
+                "response": response.get('content', ''),
+                "thinking": response.get('thinking', ''),
+                "is_reasoning_model": response.get('is_reasoning_model', False),
+                "usage": usage,
+                "cost": cost
             })
 
     return stage1_results
@@ -103,10 +115,21 @@ Now provide your evaluation and ranking:"""
         if response is not None:
             full_text = response.get('content', '')
             parsed = parse_ranking_from_text(full_text)
+            usage = response.get('usage', {})
+            cost = calculate_cost(
+                model,
+                usage.get('prompt_tokens', 0),
+                usage.get('completion_tokens', 0)
+            )
+
             stage2_results.append({
                 "model": model,
                 "ranking": full_text,
-                "parsed_ranking": parsed
+                "thinking": response.get('thinking', ''),
+                "is_reasoning_model": response.get('is_reasoning_model', False),
+                "parsed_ranking": parsed,
+                "usage": usage,
+                "cost": cost
             })
 
     return stage2_results, label_to_model
@@ -165,12 +188,25 @@ Provide a clear, well-reasoned final answer that represents the council's collec
         # Fallback if chairman fails
         return {
             "model": CHAIRMAN_MODEL,
-            "response": "Error: Unable to generate final synthesis."
+            "response": "Error: Unable to generate final synthesis.",
+            "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
+            "cost": 0.0
         }
+
+    usage = response.get('usage', {})
+    cost = calculate_cost(
+        CHAIRMAN_MODEL,
+        usage.get('prompt_tokens', 0),
+        usage.get('completion_tokens', 0)
+    )
 
     return {
         "model": CHAIRMAN_MODEL,
-        "response": response.get('content', '')
+        "response": response.get('content', ''),
+        "thinking": response.get('thinking', ''),
+        "is_reasoning_model": response.get('is_reasoning_model', False),
+        "usage": usage,
+        "cost": cost
     }
 
 
@@ -326,10 +362,37 @@ async def run_full_council(user_query: str) -> Tuple[List, List, Dict, Dict]:
         stage2_results
     )
 
+    # Calculate total cost
+    total_cost = 0.0
+    total_tokens = {"prompt": 0, "completion": 0, "total": 0}
+
+    # Sum costs from all stages
+    for result in stage1_results:
+        total_cost += result.get('cost', 0)
+        usage = result.get('usage', {})
+        total_tokens["prompt"] += usage.get('prompt_tokens', 0)
+        total_tokens["completion"] += usage.get('completion_tokens', 0)
+        total_tokens["total"] += usage.get('total_tokens', 0)
+
+    for result in stage2_results:
+        total_cost += result.get('cost', 0)
+        usage = result.get('usage', {})
+        total_tokens["prompt"] += usage.get('prompt_tokens', 0)
+        total_tokens["completion"] += usage.get('completion_tokens', 0)
+        total_tokens["total"] += usage.get('total_tokens', 0)
+
+    total_cost += stage3_result.get('cost', 0)
+    usage = stage3_result.get('usage', {})
+    total_tokens["prompt"] += usage.get('prompt_tokens', 0)
+    total_tokens["completion"] += usage.get('completion_tokens', 0)
+    total_tokens["total"] += usage.get('total_tokens', 0)
+
     # Prepare metadata
     metadata = {
         "label_to_model": label_to_model,
-        "aggregate_rankings": aggregate_rankings
+        "aggregate_rankings": aggregate_rankings,
+        "total_cost": round(total_cost, 4),
+        "total_tokens": total_tokens
     }
 
     return stage1_results, stage2_results, stage3_result, metadata

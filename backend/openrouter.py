@@ -3,12 +3,13 @@
 import httpx
 from typing import List, Dict, Any, Optional
 from .config import OPENROUTER_API_KEY, OPENROUTER_API_URL
+from .reasoning import get_model_timeout, parse_reasoning_response, is_reasoning_model
 
 
 async def query_model(
     model: str,
     messages: List[Dict[str, str]],
-    timeout: float = 120.0
+    timeout: Optional[float] = None
 ) -> Optional[Dict[str, Any]]:
     """
     Query a single model via OpenRouter API.
@@ -21,6 +22,10 @@ async def query_model(
     Returns:
         Response dict with 'content' and optional 'reasoning_details', or None if failed
     """
+    # Use model-specific timeout if not provided
+    if timeout is None:
+        timeout = get_model_timeout(model)
+
     headers = {
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
         "Content-Type": "application/json",
@@ -43,9 +48,31 @@ async def query_model(
             data = response.json()
             message = data['choices'][0]['message']
 
+            # Extract token usage
+            usage = data.get('usage', {})
+
+            # Get content
+            content = message.get('content', '')
+
+            # Parse reasoning if it's a reasoning model
+            thinking = ""
+            answer = content
+
+            if is_reasoning_model(model):
+                parsed = parse_reasoning_response(content)
+                thinking = parsed['thinking']
+                answer = parsed['answer']
+
             return {
-                'content': message.get('content'),
-                'reasoning_details': message.get('reasoning_details')
+                'content': answer,  # Final answer without thinking tags
+                'thinking': thinking,  # Extracted thinking process
+                'reasoning_details': message.get('reasoning_details'),
+                'is_reasoning_model': is_reasoning_model(model),
+                'usage': {
+                    'prompt_tokens': usage.get('prompt_tokens', 0),
+                    'completion_tokens': usage.get('completion_tokens', 0),
+                    'total_tokens': usage.get('total_tokens', 0)
+                }
             }
 
     except Exception as e:
