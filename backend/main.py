@@ -101,18 +101,6 @@ async def get_available_models():
             "description": "Most capable GPT model"
         },
         {
-            "id": "openai/gpt-4o",
-            "name": "GPT-4o",
-            "provider": "OpenAI",
-            "description": "Fast multimodal model"
-        },
-        {
-            "id": "openai/o1",
-            "name": "o1",
-            "provider": "OpenAI",
-            "description": "Advanced reasoning model"
-        },
-        {
             "id": "anthropic/claude-sonnet-4.5",
             "name": "Claude Sonnet 4.5",
             "provider": "Anthropic",
@@ -131,10 +119,10 @@ async def get_available_models():
             "description": "Advanced multimodal model"
         },
         {
-            "id": "google/gemini-2.5-flash",
-            "name": "Gemini 2.5 Flash",
+            "id": "google/gemini-3-flash-preview",
+            "name": "Gemini 3 Flash",
             "provider": "Google",
-            "description": "Fast and efficient"
+            "description": "Fast and efficient preview model"
         },
         {
             "id": "x-ai/grok-4.1-fast",
@@ -149,28 +137,16 @@ async def get_available_models():
             "description": "Standard Grok model"
         },
         {
-            "id": "meta-llama/llama-3.3-70b-instruct",
-            "name": "Llama 3.3 70B",
-            "provider": "Meta",
-            "description": "Open source powerhouse"
-        },
-        {
             "id": "deepseek/deepseek-r1",
             "name": "DeepSeek R1",
             "provider": "DeepSeek",
             "description": "Reasoning model with thinking process"
         },
         {
-            "id": "mistralai/mistral-large",
-            "name": "Mistral Large",
-            "provider": "Mistral",
-            "description": "Large multilingual model"
-        },
-        {
-            "id": "cohere/command-r-plus",
-            "name": "Command R+",
-            "provider": "Cohere",
-            "description": "Excellent for RAG and enterprise"
+            "id": "nex-agi/deepseek-v3.1-nex-n1:free",
+            "name": "DeepSeek V3.1 Nex-N1 (Free)",
+            "provider": "Nex-AGI",
+            "description": "Free enhanced DeepSeek model"
         }
     ]
 
