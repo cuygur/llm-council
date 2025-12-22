@@ -22,7 +22,7 @@
 }
 
 .settings-modal {
-  background: white;
+  background: var(--bg-color);
   border-radius: 12px;
   width: 90%;
   max-width: 800px;
@@ -31,6 +31,7 @@
   flex-direction: column;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
   animation: slideUp 0.3s ease-out;
+  border: 1px solid var(--border-color);
 }
 
 @keyframes slideUp {
@@ -49,20 +50,20 @@
   justify-content: space-between;
   align-items: center;
   padding: 24px;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .settings-header h2 {
   margin: 0;
   font-size: 24px;
-  color: #333;
+  color: var(--text-color);
 }
 
 .close-button {
   background: none;
   border: none;
   font-size: 32px;
-  color: #666;
+  color: var(--text-muted);
   cursor: pointer;
   padding: 0;
   width: 32px;
@@ -75,7 +76,7 @@
 }
 
 .close-button:hover {
-  background-color: #f0f0f0;
+  background-color: var(--tab-bg);
 }
 
 .settings-content {
@@ -87,7 +88,7 @@
 .settings-loading {
   padding: 40px;
   text-align: center;
-  color: #666;
+  color: var(--text-muted);
 }
 
 .settings-error {
@@ -114,16 +115,37 @@
 }
 
 .settings-section h3 {
-  margin: 0 0 8px 0;
+  margin: 0 0 12px 0;
   font-size: 18px;
-  color: #333;
+  color: var(--text-color);
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 8px;
 }
 
 .section-description {
   margin: 0 0 16px 0;
-  color: #666;
+  color: var(--text-muted);
   font-size: 14px;
   line-height: 1.5;
+}
+
+.setting-control {
+  margin: 12px 0;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-color);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.checkbox-label input[type='checkbox'] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
 }
 
 .model-grid {
@@ -134,7 +156,7 @@
 }
 
 .model-card {
-  border: 2px solid #e0e0e0;
+  border: 2px solid var(--border-color);
   border-radius: 8px;
   padding: 12px;
   cursor: pointer;
@@ -142,16 +164,17 @@
   display: flex;
   gap: 12px;
   align-items: flex-start;
+  background: var(--bg-color);
 }
 
 .model-card:hover {
-  border-color: #4a90e2;
-  background-color: #f8fbff;
+  border-color: var(--primary-color);
+  background-color: var(--tab-bg);
 }
 
 .model-card.selected {
-  border-color: #4a90e2;
-  background-color: #f0f7ff;
+  border-color: var(--primary-color);
+  background-color: var(--accent-color);
 }
 
 .model-checkbox {
@@ -171,25 +194,25 @@
 
 .model-name {
   font-weight: 600;
-  color: #333;
+  color: var(--text-color);
   margin-bottom: 2px;
   font-size: 15px;
 }
 
 .model-provider {
   font-size: 12px;
-  color: #4a90e2;
+  color: var(--primary-color);
   margin-bottom: 4px;
 }
 
 .model-description {
   font-size: 13px;
-  color: #666;
+  color: var(--text-muted);
   line-height: 1.4;
 }
 
 .selected-count {
-  color: #666;
+  color: var(--text-muted);
   font-size: 14px;
   text-align: right;
   margin-top: 8px;
@@ -199,20 +222,21 @@
   width: 100%;
   padding: 12px;
   font-size: 15px;
-  border: 2px solid #e0e0e0;
+  border: 2px solid var(--border-color);
   border-radius: 8px;
-  background-color: white;
+  background-color: var(--input-bg);
+  color: var(--text-color);
   cursor: pointer;
   transition: border-color 0.2s;
 }
 
 .chairman-select:hover {
-  border-color: #4a90e2;
+  border-color: var(--primary-color);
 }
 
 .chairman-select:focus {
   outline: none;
-  border-color: #4a90e2;
+  border-color: var(--primary-color);
   box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
 }
 
@@ -221,7 +245,7 @@
   justify-content: space-between;
   gap: 12px;
   padding-top: 16px;
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid var(--border-color);
   margin-top: 24px;
 }
 
@@ -246,29 +270,30 @@
 }
 
 .button-primary {
-  background-color: #4a90e2;
+  background-color: var(--primary-color);
   color: white;
 }
 
 .button-primary:hover:not(:disabled) {
-  background-color: #3a7bc8;
+  background-color: var(--primary-hover);
 }
 
 .button-secondary {
-  background-color: #f0f0f0;
-  color: #333;
+  background-color: var(--tab-bg);
+  color: var(--text-color);
 }
 
 .button-secondary:hover:not(:disabled) {
-  background-color: #e0e0e0;
+  background-color: var(--border-color);
 }
 
 .button-tertiary {
   background-color: transparent;
-  color: #666;
-  border: 1px solid #ddd;
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
 }
 
 .button-tertiary:hover:not(:disabled) {
-  background-color: #f8f8f8;
+  background-color: var(--tab-bg);
+  color: var(--text-color);
 }

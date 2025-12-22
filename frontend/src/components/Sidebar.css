@@ -1,7 +1,7 @@
 .sidebar {
   width: 260px;
-  background: #f8f8f8;
-  border-right: 1px solid #e0e0e0;
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -9,20 +9,20 @@
 
 .sidebar-header {
   padding: 16px;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .sidebar-header h1 {
   font-size: 18px;
   margin: 0 0 12px 0;
-  color: #333;
+  color: var(--text-color);
 }
 
 .new-conversation-btn {
   width: 100%;
   padding: 10px;
-  background: #4a90e2;
-  border: 1px solid #4a90e2;
+  background: var(--primary-color);
+  border: 1px solid var(--primary-color);
   border-radius: 6px;
   color: #fff;
   cursor: pointer;
@@ -33,17 +33,17 @@
 }
 
 .new-conversation-btn:hover {
-  background: #357abd;
-  border-color: #357abd;
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
 }
 
 .settings-btn {
   width: 100%;
   padding: 10px;
-  background: #ffffff;
-  border: 1px solid #ddd;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
   border-radius: 6px;
-  color: #333;
+  color: var(--text-color);
   cursor: pointer;
   font-size: 18px;
   transition: all 0.2s;
@@ -54,8 +54,8 @@
 }
 
 .settings-btn:hover {
-  background: #f0f0f0;
-  border-color: #4a90e2;
+  background: var(--tab-bg);
+  border-color: var(--primary-color);
 }
 
 .conversation-list {
@@ -67,7 +67,7 @@
 .no-conversations {
   padding: 16px;
   text-align: center;
-  color: #999;
+  color: var(--text-muted);
   font-size: 14px;
 }
 
@@ -82,12 +82,12 @@
 }
 
 .conversation-item:hover {
-  background: #f0f0f0;
+  background: var(--tab-bg);
 }
 
 .conversation-item.active {
-  background: #e8f0fe;
-  border: 1px solid #4a90e2;
+  background: var(--accent-color);
+  border: 1px solid var(--primary-color);
 }
 
 .conversation-content {
@@ -106,21 +106,22 @@
   opacity: 0.6;
   transition: all 0.2s;
   flex-shrink: 0;
+  color: var(--text-color);
 }
 
 .export-btn:hover {
   opacity: 1;
-  background: #e0e0e0;
+  background: var(--tab-bg);
   transform: scale(1.1);
 }
 
 .conversation-title {
-  color: #333;
+  color: var(--text-color);
   font-size: 14px;
   margin-bottom: 4px;
 }
 
 .conversation-meta {
-  color: #999;
+  color: var(--text-muted);
   font-size: 12px;
 }

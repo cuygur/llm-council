@@ -13,12 +13,13 @@
 }
 
 .export-menu {
-  background: white;
+  background: var(--bg-color);
   border-radius: 12px;
   width: 90%;
   max-width: 500px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
   animation: slideUp 0.3s ease-out;
+  border: 1px solid var(--border-color);
 }
 
 @keyframes fadeIn {
@@ -46,20 +47,20 @@
   justify-content: space-between;
   align-items: center;
   padding: 20px;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .export-menu-header h3 {
   margin: 0;
   font-size: 20px;
-  color: #333;
+  color: var(--text-color);
 }
 
 .close-btn {
   background: none;
   border: none;
   font-size: 28px;
-  color: #666;
+  color: var(--text-muted);
   cursor: pointer;
   padding: 0;
   width: 32px;
@@ -72,7 +73,7 @@
 }
 
 .close-btn:hover {
-  background-color: #f0f0f0;
+  background-color: var(--tab-bg);
 }
 
 .export-error {
@@ -97,8 +98,8 @@
   align-items: center;
   gap: 16px;
   padding: 16px;
-  background: white;
-  border: 2px solid #e0e0e0;
+  background: var(--bg-color);
+  border: 2px solid var(--border-color);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
@@ -106,8 +107,8 @@
 }
 
 .export-option:hover:not(:disabled) {
-  border-color: #4a90e2;
-  background-color: #f8fbff;
+  border-color: var(--primary-color);
+  background-color: var(--tab-bg);
   transform: translateX(4px);
 }
 
@@ -128,22 +129,22 @@
 .export-title {
   font-size: 16px;
   font-weight: 600;
-  color: #333;
+  color: var(--text-color);
   margin-bottom: 4px;
 }
 
 .export-desc {
   font-size: 13px;
-  color: #666;
+  color: var(--text-muted);
   line-height: 1.4;
 }
 
 .export-loading {
   padding: 16px 20px;
   text-align: center;
-  color: #4a90e2;
+  color: var(--primary-color);
   font-weight: 500;
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid var(--border-color);
   animation: pulse 1.5s ease-in-out infinite;
 }
 

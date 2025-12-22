@@ -10,6 +10,10 @@ export default function Settings({ isOpen, onClose }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    return document.body.getAttribute('data-theme') === 'dark' || 
+           localStorage.getItem('llm-council-theme') === 'dark';
+  });
 
   // Load available models and current config
   useEffect(() => {
@@ -17,6 +21,17 @@ export default function Settings({ isOpen, onClose }) {
       loadData();
     }
   }, [isOpen]);
+
+  // Handle dark mode theme
+  useEffect(() => {
+    if (isDarkMode) {
+      document.body.setAttribute('data-theme', 'dark');
+      localStorage.setItem('llm-council-theme', 'dark');
+    } else {
+      document.body.removeAttribute('data-theme');
+      localStorage.setItem('llm-council-theme', 'light');
+    }
+  }, [isDarkMode]);
 
   const loadData = async () => {
     setLoading(true);
@@ -117,6 +132,20 @@ export default function Settings({ isOpen, onClose }) {
             {successMessage && (
               <div className="settings-success">{successMessage}</div>
             )}
+
+            <section className="settings-section">
+              <h3>Appearance</h3>
+              <div className="setting-control">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={isDarkMode}
+                    onChange={(e) => setIsDarkMode(e.target.checked)}
+                  />
+                  Dark Mode
+                </label>
+              </div>
+            </section>
 
             <section className="settings-section">
               <h3>Council Members</h3>

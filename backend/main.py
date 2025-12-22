@@ -11,6 +11,7 @@ import asyncio
 
 from . import storage
 from . import config
+from .openrouter import fetch_available_models
 from .council import run_full_council, generate_conversation_title, stage1_collect_responses, stage2_collect_rankings, stage3_synthesize_final, calculate_aggregate_rankings
 from .export import export_to_markdown, export_to_json, export_to_html
 from .pricing import estimate_query_cost, format_cost
@@ -129,10 +130,16 @@ async def estimate_cost(request: CostEstimateRequest):
 @app.get("/api/models")
 async def get_available_models():
     """
-    Get list of popular OpenRouter models.
-    In a production app, this would query OpenRouter's API.
-    For now, we return a curated list of popular models.
+    Get list of available models.
+    Fetches from OpenRouter API, falling back to curated list on error.
     """
+    # Try fetching from OpenRouter
+    models = await fetch_available_models()
+    
+    if models:
+        return {"models": models}
+
+    # Fallback list if API fails
     models = [
         {
             "id": "openai/gpt-5.2",

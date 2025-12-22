@@ -2,8 +2,46 @@
 
 import httpx
 from typing import List, Dict, Any, Optional
-from .config import OPENROUTER_API_KEY, OPENROUTER_API_URL
+from .config import OPENROUTER_API_KEY, OPENROUTER_API_URL, OPENROUTER_MODELS_URL
 from .reasoning import get_model_timeout, parse_reasoning_response, is_reasoning_model
+
+
+async def fetch_available_models() -> List[Dict[str, str]]:
+    """
+    Fetch list of available models from OpenRouter.
+
+    Returns:
+        List of model dicts with id, name, provider, description
+    """
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get(OPENROUTER_MODELS_URL)
+            response.raise_for_status()
+            
+            data = response.json()
+            models_data = data.get('data', [])
+            
+            formatted_models = []
+            for model in models_data:
+                # Derive provider from ID (e.g. "anthropic/claude" -> "Anthropic")
+                model_id = model.get('id', '')
+                provider = model_id.split('/')[0].capitalize() if '/' in model_id else 'Unknown'
+                
+                formatted_models.append({
+                    "id": model_id,
+                    "name": model.get('name', model_id),
+                    "provider": provider,
+                    "description": model.get('description', '')
+                })
+                
+            # Sort by name
+            formatted_models.sort(key=lambda x: x['name'])
+            
+            return formatted_models
+
+    except Exception as e:
+        print(f"Error fetching models: {e}")
+        return []
 
 
 async def query_model(
