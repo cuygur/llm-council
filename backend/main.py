@@ -4,12 +4,13 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import uuid
 import json
 import asyncio
 
 from . import storage
+from . import config
 from .council import run_full_council, generate_conversation_title, stage1_collect_responses, stage2_collect_rankings, stage3_synthesize_final, calculate_aggregate_rankings
 
 app = FastAPI(title="LLM Council API")
@@ -34,6 +35,12 @@ class SendMessageRequest(BaseModel):
     content: str
 
 
+class ConfigUpdateRequest(BaseModel):
+    """Request to update council configuration."""
+    council_models: List[str]
+    chairman_model: str
+
+
 class ConversationMetadata(BaseModel):
     """Conversation metadata for list view."""
     id: str
@@ -54,6 +61,120 @@ class Conversation(BaseModel):
 async def root():
     """Health check endpoint."""
     return {"status": "ok", "service": "LLM Council API"}
+
+
+@app.get("/api/config")
+async def get_config():
+    """Get current council configuration."""
+    return {
+        "council_models": config.COUNCIL_MODELS,
+        "chairman_model": config.CHAIRMAN_MODEL
+    }
+
+
+@app.post("/api/config")
+async def update_config(request: ConfigUpdateRequest):
+    """Update council configuration."""
+    # Update the runtime configuration
+    config.COUNCIL_MODELS = request.council_models
+    config.CHAIRMAN_MODEL = request.chairman_model
+
+    return {
+        "status": "success",
+        "council_models": config.COUNCIL_MODELS,
+        "chairman_model": config.CHAIRMAN_MODEL
+    }
+
+
+@app.get("/api/models")
+async def get_available_models():
+    """
+    Get list of popular OpenRouter models.
+    In a production app, this would query OpenRouter's API.
+    For now, we return a curated list of popular models.
+    """
+    models = [
+        {
+            "id": "openai/gpt-5.2",
+            "name": "GPT-5.2",
+            "provider": "OpenAI",
+            "description": "Most capable GPT model"
+        },
+        {
+            "id": "openai/gpt-4o",
+            "name": "GPT-4o",
+            "provider": "OpenAI",
+            "description": "Fast multimodal model"
+        },
+        {
+            "id": "openai/o1",
+            "name": "o1",
+            "provider": "OpenAI",
+            "description": "Advanced reasoning model"
+        },
+        {
+            "id": "anthropic/claude-sonnet-4.5",
+            "name": "Claude Sonnet 4.5",
+            "provider": "Anthropic",
+            "description": "Balanced performance and speed"
+        },
+        {
+            "id": "anthropic/claude-opus-4.5",
+            "name": "Claude Opus 4.5",
+            "provider": "Anthropic",
+            "description": "Most capable Claude model"
+        },
+        {
+            "id": "google/gemini-3-pro-preview",
+            "name": "Gemini 3 Pro",
+            "provider": "Google",
+            "description": "Advanced multimodal model"
+        },
+        {
+            "id": "google/gemini-2.5-flash",
+            "name": "Gemini 2.5 Flash",
+            "provider": "Google",
+            "description": "Fast and efficient"
+        },
+        {
+            "id": "x-ai/grok-4.1-fast",
+            "name": "Grok 4.1 Fast",
+            "provider": "xAI",
+            "description": "Fast Grok model"
+        },
+        {
+            "id": "x-ai/grok-4",
+            "name": "Grok 4",
+            "provider": "xAI",
+            "description": "Standard Grok model"
+        },
+        {
+            "id": "meta-llama/llama-3.3-70b-instruct",
+            "name": "Llama 3.3 70B",
+            "provider": "Meta",
+            "description": "Open source powerhouse"
+        },
+        {
+            "id": "deepseek/deepseek-r1",
+            "name": "DeepSeek R1",
+            "provider": "DeepSeek",
+            "description": "Reasoning model with thinking process"
+        },
+        {
+            "id": "mistralai/mistral-large",
+            "name": "Mistral Large",
+            "provider": "Mistral",
+            "description": "Large multilingual model"
+        },
+        {
+            "id": "cohere/command-r-plus",
+            "name": "Command R+",
+            "provider": "Cohere",
+            "description": "Excellent for RAG and enterprise"
+        }
+    ]
+
+    return {"models": models}
 
 
 @app.get("/api/conversations", response_model=List[ConversationMetadata])
