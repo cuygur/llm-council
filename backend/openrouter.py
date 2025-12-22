@@ -115,7 +115,13 @@ async def query_model(
 
     except Exception as e:
         print(f"Error querying model {model}: {e}")
-        return None
+        return {
+            'error': str(e),
+            'content': f"Error: {str(e)}",
+            'thinking': "",
+            'is_reasoning_model': is_reasoning_model(model),
+            'usage': {}
+        }
 
 
 async def query_models_parallel(

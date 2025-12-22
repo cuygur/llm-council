@@ -35,9 +35,11 @@ export default function Stage2({ rankings, labelToModel, aggregateRankings }) {
         {rankings.map((rank, index) => (
           <button
             key={index}
-            className={`tab ${activeTab === index ? 'active' : ''}`}
+            className={`tab ${activeTab === index ? 'active' : ''} ${rank.error ? 'error' : ''}`}
             onClick={() => setActiveTab(index)}
+            title={rank.error || ''}
           >
+            {rank.error && '⚠️ '}
             {rank.model.split('/')[1] || rank.model}
           </button>
         ))}
@@ -46,27 +48,37 @@ export default function Stage2({ rankings, labelToModel, aggregateRankings }) {
       <div className="tab-content">
         <div className="ranking-model">
           {rankings[activeTab].model}
+          {rankings[activeTab].error && <span className="error-badge">⚠️ Error</span>}
         </div>
-        <div className="ranking-content markdown-content">
-          <ReactMarkdown>
-            {deAnonymizeText(rankings[activeTab].ranking, labelToModel)}
-          </ReactMarkdown>
-        </div>
-
-        {rankings[activeTab].parsed_ranking &&
-         rankings[activeTab].parsed_ranking.length > 0 && (
-          <div className="parsed-ranking">
-            <strong>Extracted Ranking:</strong>
-            <ol>
-              {rankings[activeTab].parsed_ranking.map((label, i) => (
-                <li key={i}>
-                  {labelToModel && labelToModel[label]
-                    ? labelToModel[label].split('/')[1] || labelToModel[label]
-                    : label}
-                </li>
-              ))}
-            </ol>
+        
+        {rankings[activeTab].error ? (
+          <div className="error-message">
+            <strong>Evaluation Failed:</strong> {rankings[activeTab].error}
           </div>
+        ) : (
+          <>
+            <div className="ranking-content markdown-content">
+              <ReactMarkdown>
+                {deAnonymizeText(rankings[activeTab].ranking, labelToModel)}
+              </ReactMarkdown>
+            </div>
+
+            {rankings[activeTab].parsed_ranking &&
+             rankings[activeTab].parsed_ranking.length > 0 && (
+              <div className="parsed-ranking">
+                <strong>Extracted Ranking:</strong>
+                <ol>
+                  {rankings[activeTab].parsed_ranking.map((label, i) => (
+                    <li key={i}>
+                      {labelToModel && labelToModel[label]
+                        ? labelToModel[label].split('/')[1] || labelToModel[label]
+                        : label}
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
+          </>
         )}
       </div>
 

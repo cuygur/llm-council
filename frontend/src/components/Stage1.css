@@ -44,6 +44,111 @@
   font-weight: 600;
 }
 
+.tab.error {
+  border-bottom: 2px solid #e74c3c;
+  color: #c0392b;
+}
+
+.tab.error.active {
+  border-color: #e74c3c;
+  border-bottom-color: #ffffff;
+  color: #c0392b;
+}
+
+.error-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #fcebea;
+  color: #c0392b;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: system-ui, -apple-system, sans-serif;
+  border: 1px solid #fadbd8;
+}
+
+.error-message {
+  background-color: #fff5f5;
+  border: 1px solid #feb2b2;
+  color: #c53030;
+  padding: 16px;
+  border-radius: 6px;
+  margin-top: 16px;
+}
+
+.error-message strong {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.error-message p {
+  margin: 0;
+  font-size: 14px;
+  color: #e53e3e;
+}
+
+.persona-badge {
+  background: #f0f4ff;
+  border: 1px solid #d0e1ff;
+  color: #4a90e2;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  margin-bottom: 16px;
+  font-style: italic;
+}
+
+.rebuttal-badge {
+  background: #fff8e1;
+  border: 1px solid #ffe0b2;
+  color: #f57c00;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+[data-theme='dark'] .persona-badge {
+  background: #1a202c;
+  border-color: #2c5282;
+  color: #90cdf4;
+}
+
+[data-theme='dark'] .rebuttal-badge {
+  background: #332b00;
+  border-color: #795548;
+  color: #ffcc80;
+}
+
+[data-theme='dark'] .tab.error {
+  color: #e74c3c;
+  border-bottom-color: #e74c3c;
+}
+
+[data-theme='dark'] .tab.error.active {
+  background: #3c1f1f;
+  color: #ff6b6b;
+  border-color: #e74c3c;
+}
+
+[data-theme='dark'] .error-badge {
+  background: #3c1f1f;
+  color: #ff6b6b;
+  border-color: #742a2a;
+}
+
+[data-theme='dark'] .error-message {
+  background-color: #2a1212;
+  border-color: #742a2a;
+  color: #ff6b6b;
+}
+
+[data-theme='dark'] .error-message p {
+  color: #fc8181;
+}
+
 .tab-content {
   background: var(--bg-color);
   padding: 16px;

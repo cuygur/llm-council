@@ -110,6 +110,77 @@
   animation: fadeIn 0.3s ease-in;
 }
 
+.presets-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.preset-item {
+  display: flex;
+  align-items: center;
+  background: var(--tab-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  overflow: hidden;
+  transition: all 0.2s;
+}
+
+.preset-item:hover {
+  border-color: var(--primary-color);
+}
+
+.preset-btn {
+  background: none;
+  border: none;
+  padding: 6px 12px;
+  color: var(--text-color);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.preset-btn:hover {
+  background: rgba(74, 144, 226, 0.1);
+}
+
+.preset-delete {
+  background: none;
+  border: none;
+  border-left: 1px solid var(--border-color);
+  padding: 6px 8px;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.preset-delete:hover {
+  background: #fee;
+  color: #c33;
+}
+
+.save-preset-control {
+  display: flex;
+  gap: 8px;
+}
+
+.preset-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--input-bg);
+  color: var(--text-color);
+  font-size: 14px;
+}
+
+.preset-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
 .settings-section {
   margin-bottom: 32px;
 }
@@ -209,6 +280,38 @@
   font-size: 13px;
   color: var(--text-muted);
   line-height: 1.4;
+}
+
+.model-persona-input {
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border-color);
+}
+
+.model-persona-input label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+
+.model-persona-input textarea {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--bg-color);
+  color: var(--text-color);
+  font-size: 13px;
+  resize: vertical;
+  min-height: 60px;
+}
+
+.model-persona-input textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
 }
 
 .selected-count {

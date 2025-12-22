@@ -17,9 +17,11 @@ export default function Stage1({ responses }) {
         {responses.map((resp, index) => (
           <button
             key={index}
-            className={`tab ${activeTab === index ? 'active' : ''}`}
+            className={`tab ${activeTab === index ? 'active' : ''} ${resp.error ? 'error' : ''}`}
             onClick={() => setActiveTab(index)}
+            title={resp.error || ''}
           >
+            {resp.error && '⚠️ '}
             {resp.model.split('/')[1] || resp.model}
           </button>
         ))}
@@ -33,22 +35,46 @@ export default function Stage1({ responses }) {
               🧠 Reasoning Model
             </span>
           )}
+          {responses[activeTab].error && (
+            <span className="error-badge">⚠️ Error</span>
+          )}
         </div>
 
-        {responses[activeTab].thinking && responses[activeTab].thinking.length > 50 && (
-          <details className="thinking-section">
-            <summary className="thinking-summary">
-              💭 Show Thinking Process ({Math.round(responses[activeTab].thinking.length / 4)} tokens)
-            </summary>
-            <div className="thinking-content markdown-content">
-              <ReactMarkdown>{responses[activeTab].thinking}</ReactMarkdown>
-            </div>
-          </details>
+        {responses[activeTab].persona && (
+          <div className="persona-badge">
+            <strong>🎭 Role:</strong> {responses[activeTab].persona}
+          </div>
         )}
 
-        <div className="response-text markdown-content">
-          <ReactMarkdown>{responses[activeTab].response}</ReactMarkdown>
-        </div>
+        {responses[activeTab].is_rebuttal && (
+          <div className="rebuttal-badge">
+            <strong>⚔️ Revised:</strong> This answer was updated after peer review.
+          </div>
+        )}
+
+        {responses[activeTab].error ? (
+          <div className="error-message">
+            <strong>Request Failed:</strong> {responses[activeTab].error}
+            <p>The model failed to respond or timed out.</p>
+          </div>
+        ) : (
+          <>
+            {responses[activeTab].thinking && responses[activeTab].thinking.length > 50 && (
+              <details className="thinking-section">
+                <summary className="thinking-summary">
+                  💭 Show Thinking Process ({Math.round(responses[activeTab].thinking.length / 4)} tokens)
+                </summary>
+                <div className="thinking-content markdown-content">
+                  <ReactMarkdown>{responses[activeTab].thinking}</ReactMarkdown>
+                </div>
+              </details>
+            )}
+
+            <div className="response-text markdown-content">
+              <ReactMarkdown>{responses[activeTab].response}</ReactMarkdown>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

@@ -58,9 +58,9 @@ function App() {
     }
   };
 
-  const handleNewConversation = async () => {
+  const handleNewConversation = async (councilModels, chairmanModel, modelPersonas) => {
     try {
-      const newConv = await api.createConversation();
+      const newConv = await api.createConversation(councilModels, chairmanModel, modelPersonas);
       setConversations([
         { id: newConv.id, created_at: newConv.created_at, message_count: 0 },
         ...conversations,

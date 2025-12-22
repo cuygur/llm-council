@@ -18,23 +18,36 @@ def get_conversation_path(conversation_id: str) -> str:
     return os.path.join(DATA_DIR, f"{conversation_id}.json")
 
 
-def create_conversation(conversation_id: str) -> Dict[str, Any]:
+def create_conversation(
+    conversation_id: str,
+    council_models: Optional[List[str]] = None,
+    chairman_model: Optional[str] = None,
+    model_personas: Optional[Dict[str, str]] = None
+) -> Dict[str, Any]:
     """
     Create a new conversation.
 
     Args:
         conversation_id: Unique identifier for the conversation
+        council_models: Optional list of models for this conversation
+        chairman_model: Optional chairman model for this conversation
+        model_personas: Optional mapping of model ID to persona
 
     Returns:
         New conversation dict
     """
     ensure_data_dir()
 
+    from .config import COUNCIL_MODELS, CHAIRMAN_MODEL
+
     conversation = {
         "id": conversation_id,
         "created_at": datetime.utcnow().isoformat(),
         "title": "New Conversation",
-        "messages": []
+        "messages": [],
+        "council_models": council_models or COUNCIL_MODELS,
+        "chairman_model": chairman_model or CHAIRMAN_MODEL,
+        "model_personas": model_personas or {}
     }
 
     # Save to file

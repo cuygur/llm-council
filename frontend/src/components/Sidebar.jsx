@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import ExportMenu from './ExportMenu';
+import Settings from './Settings';
 import './Sidebar.css';
 
 export default function Sidebar({
@@ -11,14 +12,21 @@ export default function Sidebar({
 }) {
   const [exportingConversationId, setExportingConversationId] = useState(null);
   const [exportingConversationTitle, setExportingConversationTitle] = useState(null);
+  const [isNewConvModalOpen, setIsNewConvModalOpen] = useState(false);
+
+  const handleCreateNewConversation = (councilModels, chairmanModel, modelPersonas) => {
+    onNewConversation(councilModels, chairmanModel, modelPersonas);
+    setIsNewConvModalOpen(false);
+  };
+
   return (
     <div className="sidebar">
       <div className="sidebar-header">
         <h1>LLM Council</h1>
-        <button className="new-conversation-btn" onClick={onNewConversation}>
+        <button className="new-conversation-btn" onClick={() => setIsNewConvModalOpen(true)}>
           + New Conversation
         </button>
-        <button className="settings-btn" onClick={onOpenSettings} title="Configure Council">
+        <button className="settings-btn" onClick={onOpenSettings} title="Configure Default Council">
           ⚙️
         </button>
       </div>
@@ -62,6 +70,16 @@ export default function Sidebar({
           ))
         )}
       </div>
+
+      {isNewConvModalOpen && (
+        <Settings
+          isOpen={isNewConvModalOpen}
+          onClose={() => setIsNewConvModalOpen(false)}
+          onSaveOverride={handleCreateNewConversation}
+          title="Start New Conversation"
+          saveButtonText="Start Conversation"
+        />
+      )}
 
       {exportingConversationId && (
         <ExportMenu

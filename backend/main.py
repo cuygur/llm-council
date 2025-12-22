@@ -30,7 +30,9 @@ app.add_middleware(
 
 class CreateConversationRequest(BaseModel):
     """Request to create a new conversation."""
-    pass
+    council_models: Optional[List[str]] = None
+    chairman_model: Optional[str] = None
+    model_personas: Optional[Dict[str, str]] = None
 
 
 class SendMessageRequest(BaseModel):
@@ -63,6 +65,9 @@ class Conversation(BaseModel):
     created_at: str
     title: str
     messages: List[Dict[str, Any]]
+    council_models: Optional[List[str]] = None
+    chairman_model: Optional[str] = None
+    model_personas: Optional[Dict[str, str]] = None
 
 
 @app.get("/")
@@ -210,7 +215,12 @@ async def list_conversations():
 async def create_conversation(request: CreateConversationRequest):
     """Create a new conversation."""
     conversation_id = str(uuid.uuid4())
-    conversation = storage.create_conversation(conversation_id)
+    conversation = storage.create_conversation(
+        conversation_id,
+        council_models=request.council_models,
+        chairman_model=request.chairman_model,
+        model_personas=request.model_personas
+    )
     return conversation
 
 
@@ -303,8 +313,19 @@ async def send_message(conversation_id: str, request: SendMessageRequest):
         storage.update_conversation_title(conversation_id, title)
 
     # Run the 3-stage council process
+    # Re-fetch conversation to get full history including the new user message
+    updated_conversation = storage.get_conversation(conversation_id)
+    
+    # Get conversation-specific council config
+    council_models = updated_conversation.get("council_models", config.COUNCIL_MODELS)
+    chairman_model = updated_conversation.get("chairman_model", config.CHAIRMAN_MODEL)
+    model_personas = updated_conversation.get("model_personas", {})
+    
     stage1_results, stage2_results, stage3_result, metadata = await run_full_council(
-        request.content
+        updated_conversation["messages"],
+        council_models,
+        chairman_model,
+        model_personas
     )
 
     # Add assistant message with all stages
@@ -343,26 +364,35 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
         try:
             # Add user message
             storage.add_user_message(conversation_id, request.content)
+            
+            # Re-fetch conversation to get full history
+            updated_conversation = storage.get_conversation(conversation_id)
+            messages = updated_conversation["messages"]
+            
+            # Get conversation-specific council config
+            council_models = updated_conversation.get("council_models", config.COUNCIL_MODELS)
+            chairman_model = updated_conversation.get("chairman_model", config.CHAIRMAN_MODEL)
+            model_personas = updated_conversation.get("model_personas", {})
 
             # Start title generation in parallel (don't await yet)
             title_task = None
             if is_first_message:
                 title_task = asyncio.create_task(generate_conversation_title(request.content))
 
-            # Stage 1: Collect responses
+            # Stage 1: Collect responses (now uses full history)
             yield f"data: {json.dumps({'type': 'stage1_start'})}\n\n"
-            stage1_results = await stage1_collect_responses(request.content)
+            stage1_results = await stage1_collect_responses(messages, council_models, model_personas)
             yield f"data: {json.dumps({'type': 'stage1_complete', 'data': stage1_results})}\n\n"
 
-            # Stage 2: Collect rankings
+            # Stage 2: Collect rankings (still focuses on latest response evaluation)
             yield f"data: {json.dumps({'type': 'stage2_start'})}\n\n"
-            stage2_results, label_to_model = await stage2_collect_rankings(request.content, stage1_results)
+            stage2_results, label_to_model = await stage2_collect_rankings(request.content, stage1_results, council_models)
             aggregate_rankings = calculate_aggregate_rankings(stage2_results, label_to_model)
             yield f"data: {json.dumps({'type': 'stage2_complete', 'data': stage2_results, 'metadata': {'label_to_model': label_to_model, 'aggregate_rankings': aggregate_rankings}})}\n\n"
 
             # Stage 3: Synthesize final answer
             yield f"data: {json.dumps({'type': 'stage3_start'})}\n\n"
-            stage3_result = await stage3_synthesize_final(request.content, stage1_results, stage2_results)
+            stage3_result = await stage3_synthesize_final(request.content, stage1_results, stage2_results, chairman_model)
             yield f"data: {json.dumps({'type': 'stage3_complete', 'data': stage3_result})}\n\n"
 
             # Wait for title generation if it was started

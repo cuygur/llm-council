@@ -6,25 +6,52 @@ from .config import COUNCIL_MODELS, CHAIRMAN_MODEL
 from .pricing import calculate_cost
 
 
-async def stage1_collect_responses(user_query: str) -> List[Dict[str, Any]]:
+async def stage1_collect_responses(
+    messages: List[Dict[str, str]],
+    council_models: List[str],
+    model_personas: Dict[str, str] = None
+) -> List[Dict[str, Any]]:
     """
     Stage 1: Collect individual responses from all council models.
 
     Args:
-        user_query: The user's question
+        messages: Full conversation history
+        council_models: List of model identifiers
+        model_personas: Optional mapping of model ID to system prompt/persona
 
     Returns:
         List of dicts with 'model' and 'response' keys
     """
-    messages = [{"role": "user", "content": user_query}]
+    import asyncio
+    
+    # Create tasks for each model
+    tasks = []
+    
+    for model in council_models:
+        # Clone messages to avoid modifying the original list for other models
+        model_messages = list(messages)
+        
+        # Inject persona if available
+        if model_personas and model in model_personas:
+            persona = model_personas[model]
+            # Prepend as system message
+            # Note: Some models might not support system messages, but OpenRouter usually handles this
+            # or we could use 'reasoning.py' helpers to check.
+            # For simplicity, we prepend a system message.
+            model_messages.insert(0, {"role": "system", "content": persona})
+            
+        tasks.append(query_model(model, model_messages))
 
-    # Query all models in parallel
-    responses = await query_models_parallel(COUNCIL_MODELS, messages)
+    # Wait for all to complete
+    responses_list = await asyncio.gather(*tasks)
+    
+    # Map back to model names
+    responses = {model: response for model, response in zip(council_models, responses_list)}
 
     # Format results
     stage1_results = []
     for model, response in responses.items():
-        if response is not None:  # Only include successful responses
+        if response is not None:
             usage = response.get('usage', {})
             cost = calculate_cost(
                 model,
@@ -32,21 +59,120 @@ async def stage1_collect_responses(user_query: str) -> List[Dict[str, Any]]:
                 usage.get('completion_tokens', 0)
             )
 
-            stage1_results.append({
+            result_entry = {
                 "model": model,
                 "response": response.get('content', ''),
                 "thinking": response.get('thinking', ''),
                 "is_reasoning_model": response.get('is_reasoning_model', False),
                 "usage": usage,
-                "cost": cost
-            })
+                "cost": cost,
+                "persona": model_personas.get(model) if model_personas else None
+            }
+            
+            if response.get('error'):
+                result_entry['error'] = response['error']
+                
+            stage1_results.append(result_entry)
 
     return stage1_results
 
 
+async def extract_ranking_with_llm(ranking_text: str, labels: List[str]) -> List[str]:
+    """
+    Use a fast LLM to extract the ranking if regex parsing fails.
+    """
+    labels_str = ", ".join(labels)
+    prompt = f"""You are a data extraction assistant. I have a text where an AI model evaluated several responses (labeled {labels_str}).
+I need you to extract the final ranking the model decided on.
+
+Evaluation Text:
+{ranking_text}
+
+Task:
+1. Identify the final ranking of the responses from best to worst.
+2. Return ONLY the labels in order, separated by commas.
+3. Use the exact labels provided: {labels_str}
+
+Example output: Response C, Response A, Response B
+
+Final Ranking:"""
+
+    messages = [{"role": "user", "content": prompt}]
+    
+    # Use a fast, cheap model for extraction (same as title generation)
+    response = await query_model("google/gemini-2.5-flash", messages, timeout=20.0)
+    
+    if not response:
+        return []
+        
+    content = response.get('content', '').strip()
+    
+    import re
+    # Extract labels from the response
+    found_labels = []
+    for label in labels:
+        if label in content:
+            found_labels.append(label)
+            
+    # Sort found labels by their position in the response to maintain order
+    found_labels.sort(key=lambda l: content.find(l))
+    
+    return found_labels
+
+
+def parse_ranking_from_text(ranking_text: str) -> List[str]:
+    """
+    Parse the FINAL RANKING section from the model's response using regex.
+
+    Args:
+        ranking_text: The full text response from the model
+
+    Returns:
+        List of response labels in ranked order
+    """
+    import re
+
+    # Normalize text (handle common variations)
+    text = ranking_text.replace("**", "") # Remove bolding which can mess up regex
+    
+    # Look for "FINAL RANKING:" section
+    search_text = text
+    if "FINAL RANKING:" in text:
+        parts = text.split("FINAL RANKING:")
+        if len(parts) >= 2:
+            search_text = parts[-1]
+    
+    # Pattern 1: Numbered "Response X" (e.g., "1. Response A" or "1) Response A")
+    numbered_matches = re.findall(r'\d+[\.\)]\s*(Response\s+[A-Z])', search_text, re.IGNORECASE)
+    if numbered_matches:
+        return [m.replace("Response", "Response ").replace("  ", " ").strip().title() for m in numbered_matches]
+
+    # Pattern 2: Just "Response X" patterns in order
+    matches = re.findall(r'Response\s+[A-Z]', search_text, re.IGNORECASE)
+    if matches:
+        # Deduplicate while preserving order
+        seen = set()
+        result = []
+        for m in matches:
+            normalized = m.replace("Response", "Response ").replace("  ", " ").strip().title()
+            if normalized not in seen:
+                result.append(normalized)
+                seen.add(normalized)
+        return result
+
+    # Pattern 3: If in FINAL RANKING section, look for single letters
+    if "FINAL RANKING:" in text:
+        letters = re.findall(r'\d+[\.\)]\s*([A-Z])(?!\w)', search_text)
+        if letters:
+            return [f"Response {l}" for l in letters]
+
+    return []
+
+
 async def stage2_collect_rankings(
     user_query: str,
-    stage1_results: List[Dict[str, Any]]
+    stage1_results: List[Dict[str, Any]],
+    council_models: List[str]
 ) -> Tuple[List[Dict[str, Any]], Dict[str, str]]:
     """
     Stage 2: Each model ranks the anonymized responses.
@@ -54,22 +180,23 @@ async def stage2_collect_rankings(
     Args:
         user_query: The original user query
         stage1_results: Results from Stage 1
+        council_models: List of model identifiers
 
     Returns:
         Tuple of (rankings list, label_to_model mapping)
     """
     # Create anonymized labels for responses (Response A, Response B, etc.)
-    labels = [chr(65 + i) for i in range(len(stage1_results))]  # A, B, C, ...
+    labels = [f"Response {chr(65 + i)}" for i in range(len(stage1_results))]
 
     # Create mapping from label to model name
     label_to_model = {
-        f"Response {label}": result['model']
+        label: result['model']
         for label, result in zip(labels, stage1_results)
     }
 
     # Build the ranking prompt
     responses_text = "\n\n".join([
-        f"Response {label}:\n{result['response']}"
+        f"{label}:\n{result['response']}"
         for label, result in zip(labels, stage1_results)
     ])
 
@@ -107,14 +234,25 @@ Now provide your evaluation and ranking:"""
     messages = [{"role": "user", "content": ranking_prompt}]
 
     # Get rankings from all council models in parallel
-    responses = await query_models_parallel(COUNCIL_MODELS, messages)
+    responses = await query_models_parallel(council_models, messages)
 
     # Format results
     stage2_results = []
     for model, response in responses.items():
         if response is not None:
             full_text = response.get('content', '')
+            
+            # Step 1: Try regex parsing
             parsed = parse_ranking_from_text(full_text)
+            
+            # Step 2: Fallback to LLM extraction if regex failed to find all responses
+            # We expect parsed to have the same number of items as stage1_results
+            # Only run extraction if there is actual content and no error
+            if not response.get('error') and len(parsed) < len(stage1_results):
+                llm_parsed = await extract_ranking_with_llm(full_text, labels)
+                if len(llm_parsed) >= len(parsed):
+                    parsed = llm_parsed
+
             usage = response.get('usage', {})
             cost = calculate_cost(
                 model,
@@ -122,7 +260,7 @@ Now provide your evaluation and ranking:"""
                 usage.get('completion_tokens', 0)
             )
 
-            stage2_results.append({
+            result_entry = {
                 "model": model,
                 "ranking": full_text,
                 "thinking": response.get('thinking', ''),
@@ -130,15 +268,154 @@ Now provide your evaluation and ranking:"""
                 "parsed_ranking": parsed,
                 "usage": usage,
                 "cost": cost
-            })
+            }
+
+            if response.get('error'):
+                result_entry['error'] = response['error']
+
+            stage2_results.append(result_entry)
 
     return stage2_results, label_to_model
+
+
+async def stage2_5_rebuttal(
+    user_query: str,
+    stage1_results: List[Dict[str, Any]],
+    stage2_results: List[Dict[str, Any]],
+    label_to_model: Dict[str, str],
+    model_personas: Dict[str, str] = None
+) -> List[Dict[str, Any]]:
+    """
+    Stage 2.5: Rebuttal Round. Models see critiques and can update their answers.
+
+    Args:
+        user_query: Original user question
+        stage1_results: Original answers
+        stage2_results: Peer rankings and critiques
+        label_to_model: Mapping of labels to model names
+        model_personas: Optional personas
+
+    Returns:
+        List of updated stage1-like results (or original if no update)
+    """
+    # Create mapping of model -> critique text received
+    model_critiques = {result['model']: [] for result in stage1_results}
+    
+    # Invert the rankings to gather critiques FOR each model
+    # stage2_results contains what each model SAID about others
+    for ranking_result in stage2_results:
+        reviewer_model = ranking_result['model']
+        critique_text = ranking_result['ranking']
+        
+        # We need to extract the specific critique for each model if possible
+        # Since the full text contains all critiques, we'll just pass the full text 
+        # and let the model find the section about itself.
+        # Ideally, we would parse this better, but passing full context is safer.
+        for label, target_model in label_to_model.items():
+            if target_model in model_critiques:
+                model_critiques[target_model].append(
+                    f"Critique from Peer ({reviewer_model}):\n{critique_text}"
+                )
+
+    # Prepare rebuttal tasks
+    import asyncio
+    tasks = []
+    participating_models = []
+
+    for result in stage1_results:
+        model = result['model']
+        original_response = result['response']
+        critiques = "\n\n---\n\n".join(model_critiques.get(model, []))
+        
+        if not critiques:
+            continue
+
+        participating_models.append(model)
+        
+        # Identify which label this model was
+        my_label = next((l for l, m in label_to_model.items() if m == model), "Unknown")
+
+        rebuttal_prompt = f"""You previously answered a user question. Other AI models have now reviewed and ranked all answers, including yours (you are identified as {my_label}).
+
+Original Question: {user_query}
+
+Your Original Answer:
+{original_response}
+
+---
+PEER REVIEWS AND RANKINGS:
+{critiques}
+---
+
+Your Task:
+1. Read the critiques of your specific answer ({my_label}).
+2. Decide if you want to update or refine your answer based on valid points raised by peers.
+3. If your original answer was perfect, just repeat it. If you missed something, fix it.
+4. Provide your FINAL, revised answer. Do not include "Thinking" or meta-commentary about the process in the final output, just the answer.
+
+Revised Answer:"""
+
+        messages = [{"role": "user", "content": rebuttal_prompt}]
+        
+        # Inject persona if available
+        if model_personas and model in model_personas:
+            messages.insert(0, {"role": "system", "content": model_personas[model]})
+
+        tasks.append(query_model(model, messages))
+
+    if not tasks:
+        return stage1_results
+
+    # Run rebuttals in parallel
+    rebuttal_responses = await asyncio.gather(*tasks)
+    
+    # Merge results
+    updated_results = []
+    rebuttal_map = {model: resp for model, resp in zip(participating_models, rebuttal_responses)}
+
+    for result in stage1_results:
+        model = result['model']
+        if model in rebuttal_map and rebuttal_map[model] and not rebuttal_map[model].get('error'):
+            new_response = rebuttal_map[model]
+            
+            # Combine costs
+            original_usage = result.get('usage', {})
+            new_usage = new_response.get('usage', {})
+            
+            combined_usage = {
+                'prompt_tokens': original_usage.get('prompt_tokens', 0) + new_usage.get('prompt_tokens', 0),
+                'completion_tokens': original_usage.get('completion_tokens', 0) + new_usage.get('completion_tokens', 0),
+                'total_tokens': original_usage.get('total_tokens', 0) + new_usage.get('total_tokens', 0)
+            }
+            
+            combined_cost = result.get('cost', 0) + calculate_cost(
+                model, 
+                new_usage.get('prompt_tokens', 0), 
+                new_usage.get('completion_tokens', 0)
+            )
+
+            updated_results.append({
+                "model": model,
+                "response": new_response.get('content', result['response']), # Use new content
+                "thinking": new_response.get('thinking', ''), # New thinking
+                "is_reasoning_model": result['is_reasoning_model'],
+                "usage": combined_usage,
+                "cost": combined_cost,
+                "persona": result.get('persona'),
+                "is_rebuttal": True # Flag to indicate this is a revised answer
+            })
+        else:
+            # Keep original
+            updated_results.append(result)
+
+    return updated_results
 
 
 async def stage3_synthesize_final(
     user_query: str,
     stage1_results: List[Dict[str, Any]],
-    stage2_results: List[Dict[str, Any]]
+    stage2_results: List[Dict[str, Any]],
+    chairman_model: str
 ) -> Dict[str, Any]:
     """
     Stage 3: Chairman synthesizes final response.
@@ -147,15 +424,19 @@ async def stage3_synthesize_final(
         user_query: The original user query
         stage1_results: Individual model responses from Stage 1
         stage2_results: Rankings from Stage 2
+        chairman_model: Model identifier for the chairman
 
     Returns:
         Dict with 'model' and 'response' keys
     """
     # Build comprehensive context for chairman
-    stage1_text = "\n\n".join([
-        f"Model: {result['model']}\nResponse: {result['response']}"
-        for result in stage1_results
-    ])
+    stage1_text = ""
+    for result in stage1_results:
+        thinking_text = ""
+        if result.get('thinking'):
+            thinking_text = f"Thinking Process:\n{result['thinking']}\n\n"
+        
+        stage1_text += f"Model: {result['model']}\n{thinking_text}Response: {result['response']}\n\n"
 
     stage2_text = "\n\n".join([
         f"Model: {result['model']}\nRanking: {result['ranking']}"
@@ -182,12 +463,12 @@ Provide a clear, well-reasoned final answer that represents the council's collec
     messages = [{"role": "user", "content": chairman_prompt}]
 
     # Query the chairman model
-    response = await query_model(CHAIRMAN_MODEL, messages)
+    response = await query_model(chairman_model, messages)
 
     if response is None:
         # Fallback if chairman fails
         return {
-            "model": CHAIRMAN_MODEL,
+            "model": chairman_model,
             "response": "Error: Unable to generate final synthesis.",
             "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
             "cost": 0.0
@@ -195,53 +476,19 @@ Provide a clear, well-reasoned final answer that represents the council's collec
 
     usage = response.get('usage', {})
     cost = calculate_cost(
-        CHAIRMAN_MODEL,
+        chairman_model,
         usage.get('prompt_tokens', 0),
         usage.get('completion_tokens', 0)
     )
 
     return {
-        "model": CHAIRMAN_MODEL,
+        "model": chairman_model,
         "response": response.get('content', ''),
         "thinking": response.get('thinking', ''),
         "is_reasoning_model": response.get('is_reasoning_model', False),
         "usage": usage,
         "cost": cost
     }
-
-
-def parse_ranking_from_text(ranking_text: str) -> List[str]:
-    """
-    Parse the FINAL RANKING section from the model's response.
-
-    Args:
-        ranking_text: The full text response from the model
-
-    Returns:
-        List of response labels in ranked order
-    """
-    import re
-
-    # Look for "FINAL RANKING:" section
-    if "FINAL RANKING:" in ranking_text:
-        # Extract everything after "FINAL RANKING:"
-        parts = ranking_text.split("FINAL RANKING:")
-        if len(parts) >= 2:
-            ranking_section = parts[1]
-            # Try to extract numbered list format (e.g., "1. Response A")
-            # This pattern looks for: number, period, optional space, "Response X"
-            numbered_matches = re.findall(r'\d+\.\s*Response [A-Z]', ranking_section)
-            if numbered_matches:
-                # Extract just the "Response X" part
-                return [re.search(r'Response [A-Z]', m).group() for m in numbered_matches]
-
-            # Fallback: Extract all "Response X" patterns in order
-            matches = re.findall(r'Response [A-Z]', ranking_section)
-            return matches
-
-    # Fallback: try to find any "Response X" patterns in order
-    matches = re.findall(r'Response [A-Z]', ranking_text)
-    return matches
 
 
 def calculate_aggregate_rankings(
@@ -264,10 +511,12 @@ def calculate_aggregate_rankings(
     model_positions = defaultdict(list)
 
     for ranking in stage2_results:
-        ranking_text = ranking['ranking']
-
-        # Parse the ranking from the structured format
-        parsed_ranking = parse_ranking_from_text(ranking_text)
+        # Use the pre-parsed ranking which includes fallback logic results
+        parsed_ranking = ranking.get('parsed_ranking', [])
+        
+        # Fallback to re-parsing if missing (backward compatibility)
+        if not parsed_ranking:
+            parsed_ranking = parse_ranking_from_text(ranking['ranking'])
 
         for position, label in enumerate(parsed_ranking, start=1):
             if label in label_to_model:
@@ -329,18 +578,29 @@ Title:"""
     return title
 
 
-async def run_full_council(user_query: str) -> Tuple[List, List, Dict, Dict]:
+async def run_full_council(
+    messages: List[Dict[str, str]],
+    council_models: List[str],
+    chairman_model: str,
+    model_personas: Dict[str, str] = None
+) -> Tuple[List, List, Dict, Dict]:
     """
     Run the complete 3-stage council process.
 
     Args:
-        user_query: The user's question
+        messages: Full conversation history
+        council_models: List of model identifiers
+        chairman_model: Model identifier for the chairman
+        model_personas: Optional mapping of model ID to system prompt/persona
 
     Returns:
         Tuple of (stage1_results, stage2_results, stage3_result, metadata)
     """
+    # Extract the latest user query for Stage 2 and 3 context
+    user_query = messages[-1]['content'] if messages else ""
+
     # Stage 1: Collect individual responses
-    stage1_results = await stage1_collect_responses(user_query)
+    stage1_results = await stage1_collect_responses(messages, council_models, model_personas)
 
     # If no models responded successfully, return error
     if not stage1_results:
@@ -350,24 +610,36 @@ async def run_full_council(user_query: str) -> Tuple[List, List, Dict, Dict]:
         }, {}
 
     # Stage 2: Collect rankings
-    stage2_results, label_to_model = await stage2_collect_rankings(user_query, stage1_results)
+    stage2_results, label_to_model = await stage2_collect_rankings(user_query, stage1_results, council_models)
 
     # Calculate aggregate rankings
     aggregate_rankings = calculate_aggregate_rankings(stage2_results, label_to_model)
 
-    # Stage 3: Synthesize final answer
-    stage3_result = await stage3_synthesize_final(
+    # Stage 2.5: Rebuttal Round
+    # Models get a chance to update their answers based on peer critiques
+    stage2_5_results = await stage2_5_rebuttal(
         user_query,
         stage1_results,
-        stage2_results
+        stage2_results,
+        label_to_model,
+        model_personas
+    )
+
+    # Stage 3: Synthesize final answer
+    # Use the UPDATED (rebuttal) results for the final synthesis
+    stage3_result = await stage3_synthesize_final(
+        user_query,
+        stage2_5_results,  # Pass revised answers
+        stage2_results,
+        chairman_model
     )
 
     # Calculate total cost
     total_cost = 0.0
     total_tokens = {"prompt": 0, "completion": 0, "total": 0}
 
-    # Sum costs from all stages
-    for result in stage1_results:
+    # Sum costs from all stages (use stage2_5_results as it includes stage 1 costs + rebuttal costs)
+    for result in stage2_5_results:
         total_cost += result.get('cost', 0)
         usage = result.get('usage', {})
         total_tokens["prompt"] += usage.get('prompt_tokens', 0)
@@ -395,4 +667,4 @@ async def run_full_council(user_query: str) -> Tuple[List, List, Dict, Dict]:
         "total_tokens": total_tokens
     }
 
-    return stage1_results, stage2_results, stage3_result, metadata
+    return stage2_5_results, stage2_results, stage3_result, metadata
