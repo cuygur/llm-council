@@ -11,6 +11,8 @@ export default function ChatInterface({
   isLoading,
 }) {
   const [input, setInput] = useState('');
+  const [estimate, setEstimate] = useState(null);
+  const [isEstimating, setIsEstimating] = useState(false);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -20,6 +22,28 @@ export default function ChatInterface({
   useEffect(() => {
     scrollToBottom();
   }, [conversation]);
+
+  // Handle cost estimation with debouncing
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      if (input.trim() && !isLoading) {
+        setIsEstimating(true);
+        try {
+          const data = await api.estimateCost(input);
+          setEstimate(data);
+        } catch (error) {
+          console.error('Estimation failed:', error);
+          setEstimate(null);
+        } finally {
+          setIsEstimating(false);
+        }
+      } else {
+        setEstimate(null);
+      }
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [input, isLoading]);
 
   // Calculate session stats
   const stats = conversation?.messages.reduce(
@@ -40,6 +64,7 @@ export default function ChatInterface({
     if (input.trim() && !isLoading) {
       onSendMessage(input);
       setInput('');
+      setEstimate(null);
     }
   };
 
@@ -153,6 +178,16 @@ export default function ChatInterface({
       </div>
 
       <form className="input-form" onSubmit={handleSubmit}>
+        {estimate && !isLoading && (
+          <div className="input-estimate">
+            <span className="estimate-item" title="Estimated Prompt Tokens">
+              Input: ~{estimate.prompt_tokens} tokens
+            </span>
+            <span className="estimate-item" title="Estimated Total Cost (3 Stages)">
+              Est. Cost: {estimate.formatted_cost}
+            </span>
+          </div>
+        )}
         <textarea
           className="message-input"
           placeholder="Ask your question... (Shift+Enter for new line, Enter to send)"

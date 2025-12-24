@@ -40,13 +40,17 @@ def create_conversation(
 
     from .config import COUNCIL_MODELS, CHAIRMAN_MODEL
 
+    # Ensure we have valid models
+    final_council = council_models if council_models is not None else COUNCIL_MODELS
+    final_chairman = chairman_model if chairman_model is not None else CHAIRMAN_MODEL
+
     conversation = {
         "id": conversation_id,
         "created_at": datetime.utcnow().isoformat(),
         "title": "New Conversation",
         "messages": [],
-        "council_models": council_models or COUNCIL_MODELS,
-        "chairman_model": chairman_model or CHAIRMAN_MODEL,
+        "council_models": final_council,
+        "chairman_model": final_chairman,
         "model_personas": model_personas or {}
     }
 

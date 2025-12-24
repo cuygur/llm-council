@@ -200,6 +200,27 @@
   line-height: 1.5;
 }
 
+.search-control {
+  margin-bottom: 16px;
+}
+
+.model-search-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  background-color: var(--input-bg);
+  color: var(--text-color);
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.model-search-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+}
+
 .setting-control {
   margin: 12px 0;
 }

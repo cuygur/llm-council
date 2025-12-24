@@ -1,0 +1,15 @@
+INFO:     Started server process [48816]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+INFO:     127.0.0.1:58506 - "OPTIONS /api/config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58509 - "OPTIONS /api/config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58510 - "GET /api/conversations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58509 - "POST /api/config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58506 - "POST /api/config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58510 - "GET /api/conversations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58526 - "GET /api/config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58526 - "GET /api/config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58524 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58526 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58567 - "GET /api/conversations/1cc7273e-099f-4558-82fb-c671799e2801 HTTP/1.1" 200 OK

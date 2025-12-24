@@ -118,6 +118,23 @@ export const api = {
   },
 
   /**
+   * Estimate the cost of a query.
+   */
+  async estimateCost(content) {
+    const response = await fetch(`${API_BASE}/api/estimate-cost`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ content }),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to estimate cost');
+    }
+    return response.json();
+  },
+
+  /**
    * Get available models from OpenRouter.
    */
   async getAvailableModels() {

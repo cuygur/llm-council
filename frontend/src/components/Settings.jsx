@@ -31,12 +31,9 @@ export default function Settings({
   const [error, setError] = useState(null);
 
   const [successMessage, setSuccessMessage] = useState('');
-
   const [presets, setPresets] = useState([]);
-
   const [newPresetName, setNewPresetName] = useState('');
-
-
+  const [modelSearch, setModelSearch] = useState('');
 
   const [isDarkMode, setIsDarkMode] = useState(() => {
 
@@ -565,117 +562,98 @@ export default function Settings({
 
 
             <section className="settings-section">
-
               <h3>Council Members</h3>
-
               <p className="section-description">
-
                 Select which models will participate in Stage 1 and Stage 2.
-
                 Each model will provide its own response and review others.
-
               </p>
 
-
-
-              <div className="model-grid">
-
-                {availableModels.map((model) => (
-
-                                    <div
-
-                                      key={model.id}
-
-                                      className={`model-card ${
-
-                                        councilModels.includes(model.id) ? 'selected' : ''
-
-                                      }`}
-
-                                      onClick={(e) => {
-
-                                        // Don't toggle if clicking the persona input
-
-                                        if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'LABEL') return;
-
-                                        handleToggleModel(model.id);
-
-                                      }}
-
-                                    >
-
-                                      <div className="model-checkbox">
-
-                                        <input
-
-                                          type="checkbox"
-
-                                          checked={councilModels.includes(model.id)}
-
-                                          onChange={() => {}}
-
-                                        />
-
-                                      </div>
-
-                                      <div className="model-info">
-
-                                        <div className="model-name">{model.name}</div>
-
-                                        <div className="model-provider">{model.provider}</div>
-
-                                        <div className="model-description">
-
-                                          {model.description}
-
-                                        </div>
-
-                                        
-
-                                        {councilModels.includes(model.id) && onSaveOverride && (
-
-                                          <div className="model-persona-input" onClick={(e) => e.stopPropagation()}>
-
-                                            <label>Role / Persona:</label>
-
-                                            <textarea
-
-                                              placeholder="You are a skeptical security engineer..."
-
-                                              value={modelPersonas[model.id] || ''}
-
-                                              onChange={(e) => setModelPersonas({
-
-                                                ...modelPersonas,
-
-                                                [model.id]: e.target.value
-
-                                              })}
-
-                                              rows={2}
-
-                                            />
-
-                                          </div>
-
-                                        )}
-
-                                      </div>
-
-                                    </div>
-
-                                  ))}
-
-                                </div>
-
-
-
-              <div className="selected-count">
-
-                {councilModels.length} model{councilModels.length !== 1 ? 's' : ''} selected
-
+              <div className="search-control">
+                <input
+                  type="text"
+                  placeholder="Search models (e.g., 'gpt', 'claude', 'gemini')..."
+                  value={modelSearch}
+                  onChange={(e) => setModelSearch(e.target.value)}
+                  className="model-search-input"
+                />
               </div>
 
+              <div className="model-grid">
+                {availableModels
+                  .filter((model) => {
+                    const search = modelSearch.toLowerCase();
+                    return (
+                      model.name.toLowerCase().includes(search) ||
+                      model.id.toLowerCase().includes(search) ||
+                      model.provider.toLowerCase().includes(search)
+                    );
+                  })
+                  .sort((a, b) => {
+                    // Show selected models first
+                    const aSelected = councilModels.includes(a.id);
+                    const bSelected = councilModels.includes(b.id);
+                    if (aSelected && !bSelected) return -1;
+                    if (!aSelected && bSelected) return 1;
+                    return 0;
+                  })
+                  .map((model) => (
+                    <div
+                      key={model.id}
+                      className={`model-card ${
+                        councilModels.includes(model.id) ? 'selected' : ''
+                      }`}
+                      onClick={(e) => {
+                        // Don't toggle if clicking the persona input
+                        if (
+                          e.target.tagName === 'TEXTAREA' ||
+                          e.target.tagName === 'LABEL'
+                        )
+                          return;
+                        handleToggleModel(model.id);
+                      }}
+                    >
+                      <div className="model-checkbox">
+                        <input
+                          type="checkbox"
+                          checked={councilModels.includes(model.id)}
+                          onChange={() => {}}
+                        />
+                      </div>
+                      <div className="model-info">
+                        <div className="model-name">{model.name}</div>
+                        <div className="model-provider">{model.provider}</div>
+                        <div className="model-description">
+                          {model.description}
+                        </div>
+
+                        {councilModels.includes(model.id) && onSaveOverride && (
+                          <div
+                            className="model-persona-input"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <label>Role / Persona:</label>
+                            <textarea
+                              placeholder="You are a skeptical security engineer..."
+                              value={modelPersonas[model.id] || ''}
+                              onChange={(e) =>
+                                setModelPersonas({
+                                  ...modelPersonas,
+                                  [model.id]: e.target.value,
+                                })
+                              }
+                              rows={2}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+              </div>
+
+              <div className="selected-count">
+                {councilModels.length} model{councilModels.length !== 1 ? 's' : ''}{' '}
+                selected
+              </div>
             </section>
 
 
@@ -693,27 +671,33 @@ export default function Settings({
 
 
               <select
-
                 className="chairman-select"
-
                 value={chairmanModel}
-
                 onChange={(e) => setChairmanModel(e.target.value)}
-
               >
-
                 <option value="">Select a chairman model...</option>
-
-                {availableModels.map((model) => (
-
-                  <option key={model.id} value={model.id}>
-
-                    {model.name} ({model.provider})
-
-                  </option>
-
-                ))}
-
+                {availableModels
+                  .filter((model) => {
+                    const search = modelSearch.toLowerCase();
+                    return (
+                      model.name.toLowerCase().includes(search) ||
+                      model.id.toLowerCase().includes(search) ||
+                      model.provider.toLowerCase().includes(search) ||
+                      model.id === chairmanModel // Always show selected
+                    );
+                  })
+                  .sort((a, b) => {
+                    if (a.provider < b.provider) return -1;
+                    if (a.provider > b.provider) return 1;
+                    if (a.name < b.name) return -1;
+                    if (a.name > b.name) return 1;
+                    return 0;
+                  })
+                  .map((model) => (
+                    <option key={model.id} value={model.id}>
+                      {model.name} ({model.provider})
+                    </option>
+                  ))}
               </select>
 
             </section>

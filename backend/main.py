@@ -49,6 +49,7 @@ class ConfigUpdateRequest(BaseModel):
 class CostEstimateRequest(BaseModel):
     """Request to estimate cost of a query."""
     content: str
+    conversation_id: Optional[str] = None
 
 
 class ConversationMetadata(BaseModel):
@@ -414,9 +415,38 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
                 yield f"data: {json.dumps({'type': 'title_complete', 'data': {'title': title}})}\n\n"
 
             # Save complete assistant message
+            # Calculate total cost and tokens across all stages
+            total_cost = 0.0
+            total_tokens = {"prompt": 0, "completion": 0, "total": 0}
+
+            # Sum from Stage 2.5 (includes Stage 1 costs + Rebuttal costs)
+            for r in stage2_5_results:
+                total_cost += r.get('cost', 0)
+                u = r.get('usage', {})
+                total_tokens["prompt"] += u.get('prompt_tokens', 0)
+                total_tokens["completion"] += u.get('completion_tokens', 0)
+                total_tokens["total"] += u.get('total_tokens', 0)
+
+            # Sum from Stage 2
+            for r in stage2_results:
+                total_cost += r.get('cost', 0)
+                u = r.get('usage', {})
+                total_tokens["prompt"] += u.get('prompt_tokens', 0)
+                total_tokens["completion"] += u.get('completion_tokens', 0)
+                total_tokens["total"] += u.get('total_tokens', 0)
+
+            # Sum from Stage 3
+            total_cost += stage3_result.get('cost', 0)
+            u = stage3_result.get('usage', {})
+            total_tokens["prompt"] += u.get('prompt_tokens', 0)
+            total_tokens["completion"] += u.get('completion_tokens', 0)
+            total_tokens["total"] += u.get('total_tokens', 0)
+
             metadata = {
                 "label_to_model": label_to_model,
-                "aggregate_rankings": aggregate_rankings
+                "aggregate_rankings": aggregate_rankings,
+                "total_cost": round(total_cost, 4),
+                "total_tokens": total_tokens
             }
 
             storage.add_assistant_message(
