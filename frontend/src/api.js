@@ -120,13 +120,16 @@ export const api = {
   /**
    * Estimate the cost of a query.
    */
-  async estimateCost(content) {
+  async estimateCost(content, conversationId = null) {
     const response = await fetch(`${API_BASE}/api/estimate-cost`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ content }),
+      body: JSON.stringify({ 
+        content,
+        conversation_id: conversationId 
+      }),
     });
     if (!response.ok) {
       throw new Error('Failed to estimate cost');

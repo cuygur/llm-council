@@ -26,10 +26,10 @@ export default function ChatInterface({
   // Handle cost estimation with debouncing
   useEffect(() => {
     const timer = setTimeout(async () => {
-      if (input.trim() && !isLoading) {
+      if (input.trim() && !isLoading && conversation?.id) {
         setIsEstimating(true);
         try {
-          const data = await api.estimateCost(input);
+          const data = await api.estimateCost(input, conversation.id);
           setEstimate(data);
         } catch (error) {
           console.error('Estimation failed:', error);

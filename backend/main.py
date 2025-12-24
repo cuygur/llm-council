@@ -111,8 +111,20 @@ async def estimate_cost(request: CostEstimateRequest):
     Returns:
         Cost estimate breakdown
     """
+    # Default to global config
+    council_models = config.COUNCIL_MODELS
+    chairman_model = config.CHAIRMAN_MODEL
+
+    # Override if conversation_id is provided
+    if request.conversation_id:
+        conversation = storage.get_conversation(request.conversation_id)
+        if conversation:
+            council_models = conversation.get("council_models", council_models)
+            chairman_model = conversation.get("chairman_model", chairman_model)
+
     # Get current council models - Stage 1 + Stage 2 + Stage 3
-    all_models = config.COUNCIL_MODELS + config.COUNCIL_MODELS + [config.CHAIRMAN_MODEL]
+    # Note: Stage 2 and 3 actually have much larger prompts, but this provides a baseline
+    all_models = council_models + council_models + [chairman_model]
 
     estimate = estimate_query_cost(
         all_models,
@@ -126,9 +138,9 @@ async def estimate_cost(request: CostEstimateRequest):
         "prompt_tokens": estimate["prompt_tokens"],
         "estimated_response_tokens": estimate["estimated_response_tokens"],
         "breakdown": {
-            "stage1_cost": sum(estimate["models"].get(m, 0) for m in config.COUNCIL_MODELS),
-            "stage2_cost": sum(estimate["models"].get(m, 0) for m in config.COUNCIL_MODELS),
-            "stage3_cost": estimate["models"].get(config.CHAIRMAN_MODEL, 0)
+            "stage1_cost": sum(estimate["models"].get(m, 0) for m in council_models),
+            "stage2_cost": sum(estimate["models"].get(m, 0) for m in council_models),
+            "stage3_cost": estimate["models"].get(chairman_model, 0)
         }
     }
 
