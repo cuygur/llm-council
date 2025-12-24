@@ -14,9 +14,9 @@ export default function Sidebar({
   const [exportingConversationTitle, setExportingConversationTitle] = useState(null);
   const [isNewConvModalOpen, setIsNewConvModalOpen] = useState(false);
 
-  const handleCreateNewConversation = async (councilModels, chairmanModel, modelPersonas) => {
+  const handleCreateNewConversation = async (councilModels, chairmanModel, modelPersonas, mode) => {
     try {
-      await onNewConversation(councilModels, chairmanModel, modelPersonas);
+      await onNewConversation(councilModels, chairmanModel, modelPersonas, mode);
       setIsNewConvModalOpen(false);
     } catch (error) {
       // Re-throw to be handled by the Settings component

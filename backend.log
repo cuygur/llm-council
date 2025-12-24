@@ -21,3 +21,11 @@ INFO:     127.0.0.1:59144 - "GET /api/config HTTP/1.1" 200 OK
 INFO:     127.0.0.1:59144 - "GET /api/config HTTP/1.1" 200 OK
 INFO:     127.0.0.1:59143 - "GET /api/models HTTP/1.1" 200 OK
 INFO:     127.0.0.1:59144 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59814 - "GET /api/config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59814 - "GET /api/config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59813 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59814 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59813 - "GET /api/config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59816 - "GET /api/config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59814 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59816 - "GET /api/models HTTP/1.1" 200 OK

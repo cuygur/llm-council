@@ -1,5 +1,6 @@
 """3-stage LLM Council orchestration."""
 
+import json
 from typing import List, Dict, Any, Tuple
 from .openrouter import query_models_parallel, query_model
 from .config import COUNCIL_MODELS, CHAIRMAN_MODEL
@@ -576,6 +577,73 @@ Title:"""
         title = title[:47] + "..."
 
     return title
+
+
+async def resolve_council_mode(
+    mode: str, 
+    query: str, 
+    council_models: List[str]
+) -> Dict[str, str]:
+    """
+    Dynamically assign personas to models based on mode and query.
+    """
+    if mode == "standard":
+        return {}
+
+    # Prompt to determine personas
+    prompt = f"""You are the Coordinator of the LLM Council.
+The user has asked the following question: "{query}"
+
+We have {len(council_models)} AI models in our council. 
+Selected Mode: {mode}
+
+Task: Assign a specific role/persona to EACH of the {len(council_models)} models to best address this query.
+
+Instructions for Specialist Mode:
+- Assign roles tailored to the problem's domain.
+- Examples: 
+  - Health: Neuroscientist, Bio-hacker, General Practitioner.
+  - Business: Fortune 500 CEO, Sun Tzu, Startup Founder.
+  - Life: Marcus Aurelius, Game Theorist, Stoic Philosopher.
+
+Instructions for Mental Model Mode:
+- Assign roles based on decision-making mental models (e.g., 6 Thinking Hats).
+- Hats: White (Facts), Red (Feelings), Black (Cautions), Yellow (Benefits), Green (Creativity), Blue (Process).
+- Or other models like First Principles, Inversion, Second-Order Thinking.
+
+Instructions for Auto Mode:
+- First, decide if Specialist or Mental Model is better for this specific query.
+- Then follow the corresponding instructions above.
+
+Return ONLY a JSON object where keys are the EXACT model identifiers provided below and values are the concise persona descriptions.
+
+Model Identifiers:
+{", ".join(council_models)}
+
+JSON Output:"""
+
+    messages = [{"role": "user", "content": prompt}]
+    
+    # Use a fast model for this
+    response = await query_model("google/gemini-2.5-flash", messages, timeout=20.0)
+    
+    if not response or not response.get('content'):
+        return {}
+        
+    try:
+        content = response['content'].strip()
+        # Remove markdown code blocks if present
+        if content.startswith("```"):
+            content = content.split("```")[1]
+            if content.startswith("json"):
+                content = content[4:]
+        
+        personas = json.loads(content)
+        # Ensure only provided models are in the dict
+        return {m: p for m, p in personas.items() if m in council_models}
+    except Exception as e:
+        print(f"Error parsing personas: {e}")
+        return {}
 
 
 async def run_full_council(

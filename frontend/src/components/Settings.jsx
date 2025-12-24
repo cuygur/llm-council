@@ -21,12 +21,10 @@ export default function Settings({
   const [councilModels, setCouncilModels] = useState([]);
 
     const [chairmanModel, setChairmanModel] = useState('');
-
-    const [modelPersonas, setModelPersonas] = useState({});
-
-    const [loading, setLoading] = useState(true);
-
-    const [saving, setSaving] = useState(false);
+  const [modelPersonas, setModelPersonas] = useState({});
+  const [mode, setMode] = useState('standard');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   const [error, setError] = useState(null);
 
@@ -177,13 +175,27 @@ export default function Settings({
 
       
 
-      // If we are starting a new conversation, we might want to default to the current config
+            // If we are starting a new conversation, we might want to default to the current config
 
-      setCouncilModels(configData.council_models);
+      
 
-      setChairmanModel(configData.chairman_model);
+            setCouncilModels(configData.council_models);
 
-    } catch (err) {
+      
+
+            setChairmanModel(configData.chairman_model);
+
+      
+
+            setMode(configData.mode || 'standard');
+
+      
+
+          } catch (err) {
+
+      
+
+      
 
       setError('Failed to load settings: ' + err.message);
 
@@ -281,23 +293,47 @@ export default function Settings({
 
 
 
-      try {
+          try {
 
 
 
-        if (onSaveOverride) {
+  
 
 
 
-          await onSaveOverride(councilModels, chairmanModel, modelPersonas);
+            if (onSaveOverride) {
 
 
 
-          return;
+  
 
 
 
-        }
+              await onSaveOverride(councilModels, chairmanModel, modelPersonas, mode);
+
+
+
+  
+
+
+
+              return;
+
+
+
+  
+
+
+
+            }
+
+
+
+  
+
+
+
+      
 
 
 
@@ -557,12 +593,137 @@ export default function Settings({
 
               </div>
 
-            </section>
+                        </section>
 
+            
 
+                        <section className="settings-section">
 
-            <section className="settings-section">
-              <h3>Council Members</h3>
+                          <h3>Council Mode</h3>
+
+                          <p className="section-description">
+
+                            Choose how council members approach the problem.
+
+                          </p>
+
+                          <div className="mode-selection">
+
+                            <label className={`mode-option ${mode === 'standard' ? 'active' : ''}`}>
+
+                              <input
+
+                                type="radio"
+
+                                name="mode"
+
+                                value="standard"
+
+                                checked={mode === 'standard'}
+
+                                onChange={(e) => setMode(e.target.value)}
+
+                              />
+
+                              <div className="mode-info">
+
+                                <div className="mode-name">Standard</div>
+
+                                <div className="mode-desc">Models use their default personas.</div>
+
+                              </div>
+
+                            </label>
+
+                            <label className={`mode-option ${mode === 'specialist' ? 'active' : ''}`}>
+
+                              <input
+
+                                type="radio"
+
+                                name="mode"
+
+                                value="specialist"
+
+                                checked={mode === 'specialist'}
+
+                                onChange={(e) => setMode(e.target.value)}
+
+                              />
+
+                              <div className="mode-info">
+
+                                <div className="mode-name">Specialist</div>
+
+                                <div className="mode-desc">Assigns domain-specific roles (e.g., Neuroscientist for health).</div>
+
+                              </div>
+
+                            </label>
+
+                            <label className={`mode-option ${mode === 'mental_model' ? 'active' : ''}`}>
+
+                              <input
+
+                                type="radio"
+
+                                name="mode"
+
+                                value="mental_model"
+
+                                checked={mode === 'mental_model'}
+
+                                onChange={(e) => setMode(e.target.value)}
+
+                              />
+
+                              <div className="mode-info">
+
+                                <div className="mode-name">Mental Models</div>
+
+                                <div className="mode-desc">Uses 6 Thinking Hats or other decision-making frameworks.</div>
+
+                              </div>
+
+                            </label>
+
+                            <label className={`mode-option ${mode === 'auto' ? 'active' : ''}`}>
+
+                              <input
+
+                                type="radio"
+
+                                name="mode"
+
+                                value="auto"
+
+                                checked={mode === 'auto'}
+
+                                onChange={(e) => setMode(e.target.value)}
+
+                              />
+
+                              <div className="mode-info">
+
+                                <div className="mode-name">Auto</div>
+
+                                <div className="mode-desc">AI chooses the best mode for your problem.</div>
+
+                              </div>
+
+                            </label>
+
+                          </div>
+
+                        </section>
+
+            
+
+                        <section className="settings-section">
+
+                          <h3>Council Members</h3>
+
+            
               <p className="section-description">
                 Select which models will participate in Stage 1 and Stage 2.
                 Each model will provide its own response and review others.

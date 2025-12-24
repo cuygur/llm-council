@@ -19,7 +19,7 @@ export const api = {
   /**
    * Create a new conversation.
    */
-  createConversation: async (councilModels, chairmanModel, modelPersonas) => {
+  createConversation: async (councilModels, chairmanModel, modelPersonas, mode = 'standard') => {
     const response = await fetch(`${API_BASE}/api/conversations`, {
       method: 'POST',
       headers: {
@@ -28,7 +28,8 @@ export const api = {
       body: JSON.stringify({
         council_models: councilModels,
         chairman_model: chairmanModel,
-        model_personas: modelPersonas
+        model_personas: modelPersonas,
+        mode: mode
       }),
     });
     if (!response.ok) {

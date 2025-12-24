@@ -22,7 +22,8 @@ def create_conversation(
     conversation_id: str,
     council_models: Optional[List[str]] = None,
     chairman_model: Optional[str] = None,
-    model_personas: Optional[Dict[str, str]] = None
+    model_personas: Optional[Dict[str, str]] = None,
+    mode: str = "standard"
 ) -> Dict[str, Any]:
     """
     Create a new conversation.
@@ -32,6 +33,7 @@ def create_conversation(
         council_models: Optional list of models for this conversation
         chairman_model: Optional chairman model for this conversation
         model_personas: Optional mapping of model ID to persona
+        mode: Initial mode for the council
 
     Returns:
         New conversation dict
@@ -51,7 +53,8 @@ def create_conversation(
         "messages": [],
         "council_models": final_council,
         "chairman_model": final_chairman,
-        "model_personas": model_personas or {}
+        "model_personas": model_personas or {},
+        "mode": mode
     }
 
     # Save to file

@@ -221,6 +221,54 @@
   box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
 }
 
+.mode-selection {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.mode-option {
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  background: var(--bg-color);
+}
+
+.mode-option:hover {
+  border-color: var(--primary-color);
+  background-color: var(--tab-bg);
+}
+
+.mode-option.active {
+  border-color: var(--primary-color);
+  background-color: var(--accent-color);
+}
+
+.mode-option input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.mode-option .mode-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-color);
+}
+
+.mode-option .mode-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.3;
+  margin-top: 2px;
+}
+
 .setting-control {
   margin: 12px 0;
 }

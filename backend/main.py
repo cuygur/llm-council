@@ -33,6 +33,7 @@ class CreateConversationRequest(BaseModel):
     council_models: Optional[List[str]] = None
     chairman_model: Optional[str] = None
     model_personas: Optional[Dict[str, str]] = None
+    mode: Optional[str] = "standard"
 
 
 class SendMessageRequest(BaseModel):
@@ -69,6 +70,7 @@ class Conversation(BaseModel):
     council_models: Optional[List[str]] = None
     chairman_model: Optional[str] = None
     model_personas: Optional[Dict[str, str]] = None
+    mode: Optional[str] = "standard"
 
 
 @app.get("/")
@@ -82,7 +84,8 @@ async def get_config():
     """Get current council configuration."""
     return {
         "council_models": config.COUNCIL_MODELS,
-        "chairman_model": config.CHAIRMAN_MODEL
+        "chairman_model": config.CHAIRMAN_MODEL,
+        "mode": config.DEFAULT_MODE
     }
 
 
@@ -232,7 +235,8 @@ async def create_conversation(request: CreateConversationRequest):
         conversation_id,
         council_models=request.council_models,
         chairman_model=request.chairman_model,
-        model_personas=request.model_personas
+        model_personas=request.model_personas,
+        mode=request.mode
     )
     return conversation
 
@@ -333,6 +337,15 @@ async def send_message(conversation_id: str, request: SendMessageRequest):
     council_models = updated_conversation.get("council_models", config.COUNCIL_MODELS)
     chairman_model = updated_conversation.get("chairman_model", config.CHAIRMAN_MODEL)
     model_personas = updated_conversation.get("model_personas", {})
+    mode = updated_conversation.get("mode", "standard")
+
+    # Resolve personas if using a special mode and they aren't set yet
+    if mode != "standard" and not model_personas:
+        from .council import resolve_council_mode
+        model_personas = await resolve_council_mode(mode, request.content, council_models)
+        # Update conversation with resolved personas so they persist
+        updated_conversation["model_personas"] = model_personas
+        storage.save_conversation(updated_conversation)
     
     stage1_results, stage2_results, stage3_result, metadata = await run_full_council(
         updated_conversation["messages"],
@@ -386,6 +399,15 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
             council_models = updated_conversation.get("council_models", config.COUNCIL_MODELS)
             chairman_model = updated_conversation.get("chairman_model", config.CHAIRMAN_MODEL)
             model_personas = updated_conversation.get("model_personas", {})
+            mode = updated_conversation.get("mode", "standard")
+
+            # Resolve personas if using a special mode and they aren't set yet
+            if mode != "standard" and not model_personas:
+                from .council import resolve_council_mode
+                model_personas = await resolve_council_mode(mode, request.content, council_models)
+                # Update conversation with resolved personas so they persist
+                updated_conversation["model_personas"] = model_personas
+                storage.save_conversation(updated_conversation)
 
             # Start title generation in parallel (don't await yet)
             title_task = None
