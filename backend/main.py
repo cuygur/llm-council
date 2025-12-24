@@ -12,7 +12,7 @@ import asyncio
 from . import storage
 from . import config
 from .openrouter import fetch_available_models
-from .council import run_full_council, generate_conversation_title, stage1_collect_responses, stage2_collect_rankings, stage3_synthesize_final, calculate_aggregate_rankings
+from .council import run_full_council, generate_conversation_title, stage1_collect_responses, stage2_collect_rankings, stage2_5_rebuttal, stage3_synthesize_final, calculate_aggregate_rankings
 from .export import export_to_markdown, export_to_json, export_to_html
 from .pricing import estimate_query_cost, format_cost
 
@@ -390,9 +390,21 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
             aggregate_rankings = calculate_aggregate_rankings(stage2_results, label_to_model)
             yield f"data: {json.dumps({'type': 'stage2_complete', 'data': stage2_results, 'metadata': {'label_to_model': label_to_model, 'aggregate_rankings': aggregate_rankings}})}\n\n"
 
+            # Stage 2.5: Rebuttal Round
+            yield f"data: {json.dumps({'type': 'stage2_5_start'})}\n\n"
+            stage2_5_results = await stage2_5_rebuttal(
+                request.content,
+                stage1_results,
+                stage2_results,
+                label_to_model,
+                model_personas
+            )
+            # Re-emit stage1_complete with updated results so UI updates
+            yield f"data: {json.dumps({'type': 'stage1_complete', 'data': stage2_5_results})}\n\n"
+
             # Stage 3: Synthesize final answer
             yield f"data: {json.dumps({'type': 'stage3_start'})}\n\n"
-            stage3_result = await stage3_synthesize_final(request.content, stage1_results, stage2_results, chairman_model)
+            stage3_result = await stage3_synthesize_final(request.content, stage2_5_results, stage2_results, chairman_model)
             yield f"data: {json.dumps({'type': 'stage3_complete', 'data': stage3_result})}\n\n"
 
             # Wait for title generation if it was started

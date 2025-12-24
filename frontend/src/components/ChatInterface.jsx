@@ -104,7 +104,11 @@ export default function ChatInterface({
                   {msg.loading?.stage1 && (
                     <div className="stage-loading">
                       <div className="spinner"></div>
-                      <span>Running Stage 1: Collecting individual responses...</span>
+                      <span>
+                        {msg.stage1 
+                          ? 'Running Stage 2.5: Rebuttal Round (Models are reviewing critiques)...' 
+                          : 'Running Stage 1: Collecting individual responses...'}
+                      </span>
                     </div>
                   )}
                   {msg.stage1 && <Stage1 responses={msg.stage1} />}

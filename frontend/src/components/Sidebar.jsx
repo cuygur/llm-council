@@ -14,9 +14,14 @@ export default function Sidebar({
   const [exportingConversationTitle, setExportingConversationTitle] = useState(null);
   const [isNewConvModalOpen, setIsNewConvModalOpen] = useState(false);
 
-  const handleCreateNewConversation = (councilModels, chairmanModel, modelPersonas) => {
-    onNewConversation(councilModels, chairmanModel, modelPersonas);
-    setIsNewConvModalOpen(false);
+  const handleCreateNewConversation = async (councilModels, chairmanModel, modelPersonas) => {
+    try {
+      await onNewConversation(councilModels, chairmanModel, modelPersonas);
+      setIsNewConvModalOpen(false);
+    } catch (error) {
+      // Re-throw to be handled by the Settings component
+      throw error;
+    }
   };
 
   return (

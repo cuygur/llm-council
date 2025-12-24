@@ -224,25 +224,67 @@ export default function Settings({
 
 
 
-  const handleSave = async () => {
-
-    if (councilModels.length === 0) {
-
-      setError('Please select at least one council member');
-
-      return;
-
-    }
+    const handleSave = async () => {
 
 
 
-    if (!chairmanModel) {
+      if (councilModels.length === 0) {
 
-      setError('Please select a chairman model');
 
-      return;
 
-    }
+        setError('Please select at least one council member');
+
+
+
+        return;
+
+
+
+      }
+
+
+
+  
+
+
+
+      if (!chairmanModel) {
+
+
+
+        setError('Please select a chairman model');
+
+
+
+        return;
+
+
+
+      }
+
+
+
+  
+
+
+
+      setSaving(true);
+
+
+
+      setError(null);
+
+
+
+      setSuccessMessage('');
+
+
+
+  
+
+
+
+      try {
 
 
 
@@ -250,7 +292,7 @@ export default function Settings({
 
 
 
-          onSaveOverride(councilModels, chairmanModel, modelPersonas);
+          await onSaveOverride(councilModels, chairmanModel, modelPersonas);
 
 
 
@@ -262,59 +304,87 @@ export default function Settings({
 
 
 
-    
+  
 
 
 
-        setSaving(true);
-
-    setError(null);
-
-    setSuccessMessage('');
+        await api.updateConfig(councilModels, chairmanModel);
 
 
 
-    try {
-
-      await api.updateConfig(councilModels, chairmanModel);
+  
 
 
 
-      // Save to localStorage as well for persistence
-
-      localStorage.setItem(
-
-        'llm-council-config',
-
-        JSON.stringify({ councilModels, chairmanModel })
-
-      );
+        // Save to localStorage as well for persistence
 
 
 
-      setSuccessMessage('Configuration saved successfully!');
+        localStorage.setItem(
 
 
 
-      // Close modal after a short delay
+          'llm-council-config',
 
-      setTimeout(() => {
 
-        onClose();
 
-      }, 1500);
+          JSON.stringify({ councilModels, chairmanModel })
 
-    } catch (err) {
 
-      setError('Failed to save configuration: ' + err.message);
 
-    } finally {
+        );
 
-      setSaving(false);
 
-    }
 
-  };
+  
+
+
+
+        setSuccessMessage('Configuration saved successfully!');
+
+
+
+  
+
+
+
+        // Close modal after a short delay
+
+
+
+        setTimeout(() => {
+
+
+
+          onClose();
+
+
+
+        }, 1500);
+
+
+
+      } catch (err) {
+
+
+
+        setError('Failed to save configuration: ' + err.message);
+
+
+
+      } finally {
+
+
+
+        setSaving(false);
+
+
+
+      }
+
+
+
+    };
 
 
 

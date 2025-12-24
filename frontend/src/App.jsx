@@ -68,6 +68,7 @@ function App() {
       setCurrentConversationId(newConv.id);
     } catch (error) {
       console.error('Failed to create conversation:', error);
+      throw error;
     }
   };
 
@@ -145,6 +146,16 @@ function App() {
               lastMsg.stage2 = event.data;
               lastMsg.metadata = event.metadata;
               lastMsg.loading.stage2 = false;
+              return { ...prev, messages };
+            });
+            break;
+
+          case 'stage2_5_start':
+            setCurrentConversation((prev) => {
+              const messages = [...prev.messages];
+              const lastMsg = messages[messages.length - 1];
+              // Re-enable stage1 loading to show we are updating answers
+              lastMsg.loading.stage1 = true;
               return { ...prev, messages };
             });
             break;
