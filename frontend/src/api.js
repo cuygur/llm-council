@@ -19,7 +19,7 @@ export const api = {
   /**
    * Create a new conversation.
    */
-  createConversation: async (councilModels, chairmanModel, modelPersonas, mode = 'standard') => {
+  async createConversation(councilModels, chairmanModel, modelPersonas, mode = 'standard') {
     const response = await fetch(`${API_BASE}/api/conversations`, {
       method: 'POST',
       headers: {

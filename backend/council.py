@@ -4,7 +4,7 @@ import json
 from typing import List, Dict, Any, Tuple
 from .openrouter import query_models_parallel, query_model
 from .config import COUNCIL_MODELS, CHAIRMAN_MODEL
-from .pricing import calculate_cost
+from .pricing import calculate_cost, calculate_total_stats
 
 
 async def stage1_collect_responses(
@@ -678,6 +678,31 @@ JSON Output:"""
         return {}
 
 
+async def get_council_config(
+    conversation: Dict[str, Any], 
+    user_query: str
+) -> Tuple[List[str], str, Dict[str, str]]:
+    """
+    Extract council configuration and resolve dynamic personas if needed.
+    """
+    from .config import COUNCIL_MODELS, CHAIRMAN_MODEL
+    from . import storage
+
+    council_models = conversation.get("council_models", COUNCIL_MODELS)
+    chairman_model = conversation.get("chairman_model", CHAIRMAN_MODEL)
+    model_personas = conversation.get("model_personas", {})
+    mode = conversation.get("mode", "standard")
+
+    # Resolve personas if using a special mode and they aren't set yet
+    if mode != "standard" and not model_personas:
+        model_personas = await resolve_council_mode(mode, user_query, council_models, chairman_model)
+        # Update conversation with resolved personas so they persist
+        conversation["model_personas"] = model_personas
+        storage.save_conversation(conversation)
+    
+    return council_models, chairman_model, model_personas
+
+
 async def run_full_council(
     messages: List[Dict[str, str]],
     council_models: List[str],
@@ -735,37 +760,15 @@ async def run_full_council(
         model_personas
     )
 
-    # Calculate total cost
-    total_cost = 0.0
-    total_tokens = {"prompt": 0, "completion": 0, "total": 0}
-
-    # Sum costs from all stages (use stage2_5_results as it includes stage 1 costs + rebuttal costs)
-    for result in stage2_5_results:
-        total_cost += result.get('cost', 0)
-        usage = result.get('usage', {})
-        total_tokens["prompt"] += usage.get('prompt_tokens', 0)
-        total_tokens["completion"] += usage.get('completion_tokens', 0)
-        total_tokens["total"] += usage.get('total_tokens', 0)
-
-    for result in stage2_results:
-        total_cost += result.get('cost', 0)
-        usage = result.get('usage', {})
-        total_tokens["prompt"] += usage.get('prompt_tokens', 0)
-        total_tokens["completion"] += usage.get('completion_tokens', 0)
-        total_tokens["total"] += usage.get('total_tokens', 0)
-
-    total_cost += stage3_result.get('cost', 0)
-    usage = stage3_result.get('usage', {})
-    total_tokens["prompt"] += usage.get('prompt_tokens', 0)
-    total_tokens["completion"] += usage.get('completion_tokens', 0)
-    total_tokens["total"] += usage.get('total_tokens', 0)
+    # Calculate total cost and tokens
+    stats = calculate_total_stats(stage2_5_results, stage2_results, stage3_result)
 
     # Prepare metadata
     metadata = {
         "label_to_model": label_to_model,
         "aggregate_rankings": aggregate_rankings,
-        "total_cost": round(total_cost, 4),
-        "total_tokens": total_tokens
+        "total_cost": stats["total_cost"],
+        "total_tokens": stats["total_tokens"]
     }
 
     return stage2_5_results, stage2_results, stage3_result, metadata

@@ -178,3 +178,43 @@ def get_cost_category(cost: float) -> str:
         return "high"
     else:
         return "very-high"
+
+
+def calculate_total_stats(
+    stage1_results: List[Dict[str, Any]],
+    stage2_results: List[Dict[str, Any]],
+    stage3_result: Dict[str, Any]
+) -> Dict[str, Any]:
+    """
+    Calculate total cost and tokens across all stages.
+    """
+    total_cost = 0.0
+    total_tokens = {"prompt": 0, "completion": 0, "total": 0}
+
+    # Sum from Stage 1/2.5
+    for r in stage1_results:
+        total_cost += r.get('cost', 0)
+        u = r.get('usage', {})
+        total_tokens["prompt"] += u.get('prompt_tokens', 0)
+        total_tokens["completion"] += u.get('completion_tokens', 0)
+        total_tokens["total"] += u.get('total_tokens', 0)
+
+    # Sum from Stage 2
+    for r in stage2_results:
+        total_cost += r.get('cost', 0)
+        u = r.get('usage', {})
+        total_tokens["prompt"] += u.get('prompt_tokens', 0)
+        total_tokens["completion"] += u.get('completion_tokens', 0)
+        total_tokens["total"] += u.get('total_tokens', 0)
+
+    # Sum from Stage 3
+    total_cost += stage3_result.get('cost', 0)
+    u = stage3_result.get('usage', {})
+    total_tokens["prompt"] += u.get('prompt_tokens', 0)
+    total_tokens["completion"] += u.get('completion_tokens', 0)
+    total_tokens["total"] += u.get('total_tokens', 0)
+
+    return {
+        "total_cost": round(total_cost, 4),
+        "total_tokens": total_tokens
+    }

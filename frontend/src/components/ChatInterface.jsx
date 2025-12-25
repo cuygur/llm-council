@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import Stage1 from './Stage1';
 import Stage2 from './Stage2';
 import Stage3 from './Stage3';
+import { api } from '../api';
 import './ChatInterface.css';
 
 export default function ChatInterface({
@@ -43,7 +44,7 @@ export default function ChatInterface({
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [input, isLoading]);
+  }, [input, isLoading, conversation?.id]);
 
   // Calculate session stats
   const stats = conversation?.messages.reduce(
@@ -186,7 +187,12 @@ export default function ChatInterface({
       </div>
 
       <form className="input-form" onSubmit={handleSubmit}>
-        {estimate && !isLoading && (
+        {isEstimating && !isLoading && (
+          <div className="input-estimate">
+            <span className="estimate-item">Calculating cost...</span>
+          </div>
+        )}
+        {estimate && !isLoading && !isEstimating && (
           <div className="input-estimate">
             <span className="estimate-item" title="Estimated Prompt Tokens">
               Input: ~{estimate.prompt_tokens} tokens

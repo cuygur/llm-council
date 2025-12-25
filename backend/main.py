@@ -333,19 +333,11 @@ async def send_message(conversation_id: str, request: SendMessageRequest):
     # Re-fetch conversation to get full history including the new user message
     updated_conversation = storage.get_conversation(conversation_id)
     
-    # Get conversation-specific council config
-    council_models = updated_conversation.get("council_models", config.COUNCIL_MODELS)
-    chairman_model = updated_conversation.get("chairman_model", config.CHAIRMAN_MODEL)
-    model_personas = updated_conversation.get("model_personas", {})
-    mode = updated_conversation.get("mode", "standard")
-
-    # Resolve personas if using a special mode and they aren't set yet
-    if mode != "standard" and not model_personas:
-        from .council import resolve_council_mode
-        model_personas = await resolve_council_mode(mode, request.content, council_models, chairman_model)
-        # Update conversation with resolved personas so they persist
-        updated_conversation["model_personas"] = model_personas
-        storage.save_conversation(updated_conversation)
+    from .council import get_council_config
+    council_models, chairman_model, model_personas = await get_council_config(
+        updated_conversation, 
+        request.content
+    )
     
     stage1_results, stage2_results, stage3_result, metadata = await run_full_council(
         updated_conversation["messages"],
@@ -395,20 +387,15 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
             updated_conversation = storage.get_conversation(conversation_id)
             messages = updated_conversation["messages"]
             
-            # Get conversation-specific council config
-            council_models = updated_conversation.get("council_models", config.COUNCIL_MODELS)
-            chairman_model = updated_conversation.get("chairman_model", config.CHAIRMAN_MODEL)
-            model_personas = updated_conversation.get("model_personas", {})
-            mode = updated_conversation.get("mode", "standard")
-
-            # Resolve personas if using a special mode and they aren't set yet
-            if mode != "standard" and not model_personas:
+            from .council import get_council_config
+            # Send persona resolution event if needed
+            if updated_conversation.get("mode") != "standard" and not updated_conversation.get("model_personas"):
                 yield f"data: {json.dumps({'type': 'resolving_personas'})}\n\n"
-                from .council import resolve_council_mode
-                model_personas = await resolve_council_mode(mode, request.content, council_models, chairman_model)
-                # Update conversation with resolved personas so they persist
-                updated_conversation["model_personas"] = model_personas
-                storage.save_conversation(updated_conversation)
+
+            council_models, chairman_model, model_personas = await get_council_config(
+                updated_conversation, 
+                request.content
+            )
 
             # Start title generation in parallel (don't await yet)
             title_task = None
@@ -440,7 +427,7 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
 
             # Stage 3: Synthesize final answer
             yield f"data: {json.dumps({'type': 'stage3_start'})}\n\n"
-            stage3_result = await stage3_synthesize_final(request.content, stage2_5_results, stage2_results, chairman_model)
+            stage3_result = await stage3_synthesize_final(request.content, stage2_5_results, stage2_results, chairman_model, model_personas)
             yield f"data: {json.dumps({'type': 'stage3_complete', 'data': stage3_result})}\n\n"
 
             # Wait for title generation if it was started
@@ -450,38 +437,14 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
                 yield f"data: {json.dumps({'type': 'title_complete', 'data': {'title': title}})}\n\n"
 
             # Save complete assistant message
-            # Calculate total cost and tokens across all stages
-            total_cost = 0.0
-            total_tokens = {"prompt": 0, "completion": 0, "total": 0}
-
-            # Sum from Stage 2.5 (includes Stage 1 costs + Rebuttal costs)
-            for r in stage2_5_results:
-                total_cost += r.get('cost', 0)
-                u = r.get('usage', {})
-                total_tokens["prompt"] += u.get('prompt_tokens', 0)
-                total_tokens["completion"] += u.get('completion_tokens', 0)
-                total_tokens["total"] += u.get('total_tokens', 0)
-
-            # Sum from Stage 2
-            for r in stage2_results:
-                total_cost += r.get('cost', 0)
-                u = r.get('usage', {})
-                total_tokens["prompt"] += u.get('prompt_tokens', 0)
-                total_tokens["completion"] += u.get('completion_tokens', 0)
-                total_tokens["total"] += u.get('total_tokens', 0)
-
-            # Sum from Stage 3
-            total_cost += stage3_result.get('cost', 0)
-            u = stage3_result.get('usage', {})
-            total_tokens["prompt"] += u.get('prompt_tokens', 0)
-            total_tokens["completion"] += u.get('completion_tokens', 0)
-            total_tokens["total"] += u.get('total_tokens', 0)
+            from .pricing import calculate_total_stats
+            stats = calculate_total_stats(stage2_5_results, stage2_results, stage3_result)
 
             metadata = {
                 "label_to_model": label_to_model,
                 "aggregate_rankings": aggregate_rankings,
-                "total_cost": round(total_cost, 4),
-                "total_tokens": total_tokens
+                "total_cost": stats["total_cost"],
+                "total_tokens": stats["total_tokens"]
             }
 
             storage.add_assistant_message(
