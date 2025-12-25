@@ -12,6 +12,8 @@ export default function ChatInterface({
   isLoading,
 }) {
   const [input, setInput] = useState('');
+  const [attachments, setAttachments] = useState([]);
+  const fileInputRef = useRef(null);
   const [estimate, setEstimate] = useState(null);
   const [isEstimating, setIsEstimating] = useState(false);
   const messagesEndRef = useRef(null);
@@ -60,11 +62,49 @@ export default function ChatInterface({
     { cost: 0, tokens: 0 }
   );
 
+  const handleFileSelect = async (e) => {
+    const files = Array.from(e.target.files);
+    const newAttachments = [];
+
+    for (const file of files) {
+      if (file.size > 1024 * 1024 * 5) { // 5MB limit
+        alert(`File ${file.name} is too large (max 5MB)`);
+        continue;
+      }
+
+      const reader = new FileReader();
+      const content = await new Promise((resolve) => {
+        reader.onload = (e) => resolve(e.target.result);
+        reader.readAsText(file);
+      });
+
+      newAttachments.push({
+        name: file.name,
+        type: file.type,
+        content: content
+      });
+    }
+
+    setAttachments([...attachments, ...newAttachments]);
+    // Reset input so same file can be selected again
+    e.target.value = null;
+  };
+
+  const removeAttachment = (index) => {
+    setAttachments(attachments.filter((_, i) => i !== index));
+  };
+
+  const handleExport = (format) => {
+    if (!conversation?.id) return;
+    window.location.href = `http://localhost:8001/api/conversations/${conversation.id}/export?format=${format}`;
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (input.trim() && !isLoading) {
-      onSendMessage(input);
+    if ((input.trim() || attachments.length > 0) && !isLoading) {
+      onSendMessage(input, attachments);
       setInput('');
+      setAttachments([]);
       setEstimate(null);
     }
   };
@@ -145,6 +185,11 @@ export default function ChatInterface({
             <span className="stat-item" title="Total Tokens">
               🔢 {stats.tokens.toLocaleString()} tokens
             </span>
+            <div className="export-controls">
+              <button onClick={() => handleExport('md')} title="Export as Markdown">⬇️ MD</button>
+              <button onClick={() => handleExport('json')} title="Export as JSON">⬇️ JSON</button>
+              <button onClick={() => handleExport('html')} title="Export as HTML">⬇️ HTML</button>
+            </div>
           </div>
         </div>
       )}
@@ -254,22 +299,61 @@ export default function ChatInterface({
             </span>
           </div>
         )}
-        <textarea
-          className="message-input"
-          placeholder="Ask your question... (Shift+Enter for new line, Enter to send)"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          disabled={isLoading}
-          rows={3}
-        />
-        <button
-          type="submit"
-          className="send-button"
-          disabled={!input.trim() || isLoading}
-        >
-          Send
-        </button>
+          </div>
+        )}
+        
+        {attachments.length > 0 && (
+          <div className="attachments-preview">
+            {attachments.map((file, i) => (
+              <div key={i} className="attachment-chip">
+                <span className="attachment-name">📄 {file.name}</span>
+                <button 
+                  type="button" 
+                  className="attachment-remove"
+                  onClick={() => removeAttachment(i)}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        
+        <div className="input-row">
+          <input
+            type="file"
+            multiple
+            ref={fileInputRef}
+            onChange={handleFileSelect}
+            style={{ display: 'none' }}
+          />
+          <button
+            type="button"
+            className="attach-button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isLoading}
+            title="Attach files"
+          >
+            📎
+          </button>
+          
+          <textarea
+            className="message-input"
+            placeholder="Ask your question... (Shift+Enter for new line, Enter to send)"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={isLoading}
+            rows={3}
+          />
+          <button
+            type="submit"
+            className="send-button"
+            disabled={(!input.trim() && attachments.length === 0) || isLoading}
+          >
+            Send
+          </button>
+        </div>
       </form>
     </div>
   );

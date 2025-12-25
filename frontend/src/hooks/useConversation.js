@@ -80,7 +80,7 @@ export function useConversation() {
     }
   };
 
-  const sendMessage = async (content) => {
+  const sendMessage = async (content, attachments = null) => {
     if (!currentConversationId) return;
 
     setIsLoading(true);
