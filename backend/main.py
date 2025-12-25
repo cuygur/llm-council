@@ -342,7 +342,7 @@ async def send_message(conversation_id: str, request: SendMessageRequest):
     # Resolve personas if using a special mode and they aren't set yet
     if mode != "standard" and not model_personas:
         from .council import resolve_council_mode
-        model_personas = await resolve_council_mode(mode, request.content, council_models)
+        model_personas = await resolve_council_mode(mode, request.content, council_models, chairman_model)
         # Update conversation with resolved personas so they persist
         updated_conversation["model_personas"] = model_personas
         storage.save_conversation(updated_conversation)
@@ -403,8 +403,9 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
 
             # Resolve personas if using a special mode and they aren't set yet
             if mode != "standard" and not model_personas:
+                yield f"data: {json.dumps({'type': 'resolving_personas'})}\n\n"
                 from .council import resolve_council_mode
-                model_personas = await resolve_council_mode(mode, request.content, council_models)
+                model_personas = await resolve_council_mode(mode, request.content, council_models, chairman_model)
                 # Update conversation with resolved personas so they persist
                 updated_conversation["model_personas"] = model_personas
                 storage.save_conversation(updated_conversation)
@@ -421,7 +422,7 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
 
             # Stage 2: Collect rankings (still focuses on latest response evaluation)
             yield f"data: {json.dumps({'type': 'stage2_start'})}\n\n"
-            stage2_results, label_to_model = await stage2_collect_rankings(request.content, stage1_results, council_models)
+            stage2_results, label_to_model = await stage2_collect_rankings(request.content, stage1_results, council_models, model_personas)
             aggregate_rankings = calculate_aggregate_rankings(stage2_results, label_to_model)
             yield f"data: {json.dumps({'type': 'stage2_complete', 'data': stage2_results, 'metadata': {'label_to_model': label_to_model, 'aggregate_rankings': aggregate_rankings}})}\n\n"
 

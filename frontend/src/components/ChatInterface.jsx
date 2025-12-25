@@ -125,6 +125,14 @@ export default function ChatInterface({
                 <div className="assistant-message">
                   <div className="message-label">LLM Council</div>
 
+                  {/* Persona Resolution */}
+                  {msg.loading?.resolving && (
+                    <div className="stage-loading">
+                      <div className="spinner"></div>
+                      <span>Summoning domain specialists and preparing council...</span>
+                    </div>
+                  )}
+
                   {/* Stage 1 */}
                   {msg.loading?.stage1 && (
                     <div className="stage-loading">

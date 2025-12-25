@@ -101,7 +101,7 @@ Final Ranking:"""
     messages = [{"role": "user", "content": prompt}]
     
     # Use a fast, cheap model for extraction (same as title generation)
-    response = await query_model("google/gemini-2.5-flash", messages, timeout=20.0)
+    response = await query_model("google/gemini-3-flash-preview", messages, timeout=20.0)
     
     if not response:
         return []
@@ -173,7 +173,8 @@ def parse_ranking_from_text(ranking_text: str) -> List[str]:
 async def stage2_collect_rankings(
     user_query: str,
     stage1_results: List[Dict[str, Any]],
-    council_models: List[str]
+    council_models: List[str],
+    model_personas: Dict[str, str] = None
 ) -> Tuple[List[Dict[str, Any]], Dict[str, str]]:
     """
     Stage 2: Each model ranks the anonymized responses.
@@ -182,6 +183,7 @@ async def stage2_collect_rankings(
         user_query: The original user query
         stage1_results: Results from Stage 1
         council_models: List of model identifiers
+        model_personas: Optional mapping of model ID to persona
 
     Returns:
         Tuple of (rankings list, label_to_model mapping)
@@ -232,10 +234,19 @@ FINAL RANKING:
 
 Now provide your evaluation and ranking:"""
 
-    messages = [{"role": "user", "content": ranking_prompt}]
+    import asyncio
+    tasks = []
+    
+    for model in council_models:
+        messages = [{"role": "user", "content": ranking_prompt}]
+        # Inject persona if available
+        if model_personas and model in model_personas:
+            messages.insert(0, {"role": "system", "content": model_personas[model]})
+        tasks.append(query_model(model, messages))
 
     # Get rankings from all council models in parallel
-    responses = await query_models_parallel(council_models, messages)
+    responses_list = await asyncio.gather(*tasks)
+    responses = {model: response for model, response in zip(council_models, responses_list)}
 
     # Format results
     stage2_results = []
@@ -416,7 +427,8 @@ async def stage3_synthesize_final(
     user_query: str,
     stage1_results: List[Dict[str, Any]],
     stage2_results: List[Dict[str, Any]],
-    chairman_model: str
+    chairman_model: str,
+    model_personas: Dict[str, str] = None
 ) -> Dict[str, Any]:
     """
     Stage 3: Chairman synthesizes final response.
@@ -426,6 +438,7 @@ async def stage3_synthesize_final(
         stage1_results: Individual model responses from Stage 1
         stage2_results: Rankings from Stage 2
         chairman_model: Model identifier for the chairman
+        model_personas: Optional mapping of model ID to persona
 
     Returns:
         Dict with 'model' and 'response' keys
@@ -462,6 +475,10 @@ Your task as Chairman is to synthesize all of this information into a single, co
 Provide a clear, well-reasoned final answer that represents the council's collective wisdom:"""
 
     messages = [{"role": "user", "content": chairman_prompt}]
+    
+    # Inject persona if available
+    if model_personas and chairman_model in model_personas:
+        messages.insert(0, {"role": "system", "content": model_personas[chairman_model]})
 
     # Query the chairman model
     response = await query_model(chairman_model, messages)
@@ -560,8 +577,8 @@ Title:"""
 
     messages = [{"role": "user", "content": title_prompt}]
 
-    # Use gemini-2.5-flash for title generation (fast and cheap)
-    response = await query_model("google/gemini-2.5-flash", messages, timeout=30.0)
+    # Use gemini-3-flash-preview for title generation (fast and cheap)
+    response = await query_model("google/gemini-3-flash-preview", messages, timeout=30.0)
 
     if response is None:
         # Fallback to a generic title
@@ -582,7 +599,8 @@ Title:"""
 async def resolve_council_mode(
     mode: str, 
     query: str, 
-    council_models: List[str]
+    council_models: List[str],
+    chairman_model: str
 ) -> Dict[str, str]:
     """
     Dynamically assign personas to models based on mode and query.
@@ -590,14 +608,16 @@ async def resolve_council_mode(
     if mode == "standard":
         return {}
 
+    all_models = list(set(council_models + [chairman_model]))
+
     # Prompt to determine personas
     prompt = f"""You are the Coordinator of the LLM Council.
 The user has asked the following question: "{query}"
 
-We have {len(council_models)} AI models in our council. 
+We have a council of {len(council_models)} members and 1 Chairman. 
 Selected Mode: {mode}
 
-Task: Assign a specific role/persona to EACH of the {len(council_models)} models to best address this query.
+Task: Assign a specific role/persona to EACH of the models provided below to best address this query.
 
 Instructions for Specialist Mode:
 - Assign roles tailored to the problem's domain.
@@ -612,35 +632,47 @@ Instructions for Mental Model Mode:
 - Or other models like First Principles, Inversion, Second-Order Thinking.
 
 Instructions for Auto Mode:
-- First, decide if Specialist or Mental Model is better for this specific query.
-- Then follow the corresponding instructions above.
+- Analyze the user's question to determine if it requires domain-specific expertise (Specialist Mode) or strategic/structured analysis (Mental Model Mode).
+- If the question is about a specific field (Health, Law, Engineering, History), use Specialist Mode.
+- If the question is about decision-making, problem-solving, or general strategy, use Mental Model Mode.
+- Once decided, follow the corresponding persona assignment instructions.
+
+IMPORTANT: The model designated as the Chairman ({chairman_model}) should be assigned a role focused on synthesis, unbiased judgment, and final decision-making tailored to the domain.
 
 Return ONLY a JSON object where keys are the EXACT model identifiers provided below and values are the concise persona descriptions.
 
 Model Identifiers:
-{", ".join(council_models)}
+{", ".join(all_models)}
 
 JSON Output:"""
 
     messages = [{"role": "user", "content": prompt}]
     
+    print(f"Resolving personas for mode: {mode}")
     # Use a fast model for this
-    response = await query_model("google/gemini-2.5-flash", messages, timeout=20.0)
+    response = await query_model("google/gemini-3-flash-preview", messages, timeout=20.0)
     
     if not response or not response.get('content'):
+        print("Failed to get response for persona resolution")
         return {}
         
     try:
         content = response['content'].strip()
+        print(f"Raw persona response: {content}")
         # Remove markdown code blocks if present
         if content.startswith("```"):
-            content = content.split("```")[1]
-            if content.startswith("json"):
-                content = content[4:]
+            # Find the first and last backticks
+            lines = content.split('\n')
+            if lines[0].startswith("```"):
+                lines = lines[1:]
+            if lines[-1].strip() == "```":
+                lines = lines[:-1]
+            content = '\n'.join(lines).strip()
         
         personas = json.loads(content)
+        print(f"Parsed personas: {personas}")
         # Ensure only provided models are in the dict
-        return {m: p for m, p in personas.items() if m in council_models}
+        return {m: p for m, p in personas.items() if m in all_models}
     except Exception as e:
         print(f"Error parsing personas: {e}")
         return {}
@@ -678,7 +710,7 @@ async def run_full_council(
         }, {}
 
     # Stage 2: Collect rankings
-    stage2_results, label_to_model = await stage2_collect_rankings(user_query, stage1_results, council_models)
+    stage2_results, label_to_model = await stage2_collect_rankings(user_query, stage1_results, council_models, model_personas)
 
     # Calculate aggregate rankings
     aggregate_rankings = calculate_aggregate_rankings(stage2_results, label_to_model)
@@ -699,7 +731,8 @@ async def run_full_council(
         user_query,
         stage2_5_results,  # Pass revised answers
         stage2_results,
-        chairman_model
+        chairman_model,
+        model_personas
     )
 
     # Calculate total cost

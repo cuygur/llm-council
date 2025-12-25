@@ -96,6 +96,7 @@ function App() {
         stage3: null,
         metadata: null,
         loading: {
+          resolving: false,
           stage1: false,
           stage2: false,
           stage3: false,
@@ -111,10 +112,20 @@ function App() {
       // Send message with streaming
       await api.sendMessageStream(currentConversationId, content, (eventType, event) => {
         switch (eventType) {
+          case 'resolving_personas':
+            setCurrentConversation((prev) => {
+              const messages = [...prev.messages];
+              const lastMsg = messages[messages.length - 1];
+              lastMsg.loading.resolving = true;
+              return { ...prev, messages };
+            });
+            break;
+
           case 'stage1_start':
             setCurrentConversation((prev) => {
               const messages = [...prev.messages];
               const lastMsg = messages[messages.length - 1];
+              lastMsg.loading.resolving = false;
               lastMsg.loading.stage1 = true;
               return { ...prev, messages };
             });

@@ -1,42 +1,6 @@
-INFO:     Started server process [48816]
+INFO:     Started server process [87197]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
-INFO:     127.0.0.1:58506 - "OPTIONS /api/config HTTP/1.1" 200 OK
-INFO:     127.0.0.1:58509 - "OPTIONS /api/config HTTP/1.1" 200 OK
-INFO:     127.0.0.1:58510 - "GET /api/conversations HTTP/1.1" 200 OK
-INFO:     127.0.0.1:58509 - "POST /api/config HTTP/1.1" 200 OK
-INFO:     127.0.0.1:58506 - "POST /api/config HTTP/1.1" 200 OK
-INFO:     127.0.0.1:58510 - "GET /api/conversations HTTP/1.1" 200 OK
-INFO:     127.0.0.1:58526 - "GET /api/config HTTP/1.1" 200 OK
-INFO:     127.0.0.1:58526 - "GET /api/config HTTP/1.1" 200 OK
-INFO:     127.0.0.1:58524 - "GET /api/models HTTP/1.1" 200 OK
-INFO:     127.0.0.1:58526 - "GET /api/models HTTP/1.1" 200 OK
-INFO:     127.0.0.1:58567 - "GET /api/conversations/1cc7273e-099f-4558-82fb-c671799e2801 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59086 - "GET /api/conversations/f2fb1143-0dd3-40f9-b59c-d2302f49ec74 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59086 - "GET /api/conversations/1cc7273e-099f-4558-82fb-c671799e2801 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59091 - "GET /api/config HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59086 - "GET /api/models HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59144 - "GET /api/config HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59144 - "GET /api/config HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59143 - "GET /api/models HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59144 - "GET /api/models HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59814 - "GET /api/config HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59814 - "GET /api/config HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59813 - "GET /api/models HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59814 - "GET /api/models HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59813 - "GET /api/config HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59816 - "GET /api/config HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59814 - "GET /api/models HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59816 - "GET /api/models HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60080 - "GET /api/config HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60080 - "GET /api/config HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60079 - "GET /api/models HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60080 - "GET /api/models HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60131 - "OPTIONS /api/conversations HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60131 - "POST /api/conversations HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60131 - "GET /api/conversations/070a9577-5edc-482b-ab66-ef0dcc749db5 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60242 - "OPTIONS /api/conversations/070a9577-5edc-482b-ab66-ef0dcc749db5/message/stream HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60242 - "POST /api/conversations/070a9577-5edc-482b-ab66-ef0dcc749db5/message/stream HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60242 - "GET /api/conversations HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60242 - "GET /api/conversations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51844 - "POST /api/conversations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51863 - "POST /api/conversations/4a25ae5b-0657-4bc0-a303-9c8bfcf060ff/message HTTP/1.1" 200 OK
