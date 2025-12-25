@@ -32,6 +32,7 @@ export default function Settings({
   const [presets, setPresets] = useState([]);
   const [newPresetName, setNewPresetName] = useState('');
   const [modelSearch, setModelSearch] = useState('');
+  const [showAllModels, setShowAllModels] = useState(false);
 
   const [isDarkMode, setIsDarkMode] = useState(() => {
 
@@ -757,6 +758,14 @@ export default function Settings({
                     if (!aSelected && bSelected) return 1;
                     return 0;
                   })
+                  .filter((model, index) => {
+                    // Always show if searching or "show all" is on
+                    if (modelSearch || showAllModels) return true;
+                    // Always show selected models
+                    if (councilModels.includes(model.id)) return true;
+                    // Otherwise limit to first 12
+                    return index < 12;
+                  })
                   .map((model) => (
                     <div
                       key={model.id}
@@ -810,6 +819,17 @@ export default function Settings({
                     </div>
                   ))}
               </div>
+
+              {!modelSearch && availableModels.length > 12 && (
+                <div className="show-more-container">
+                  <button 
+                    className="button button-tertiary show-more-btn"
+                    onClick={() => setShowAllModels(!showAllModels)}
+                  >
+                    {showAllModels ? '↑ Show Fewer Models' : '↓ Show All Models'}
+                  </button>
+                </div>
+              )}
 
               <div className="selected-count">
                 {councilModels.length} model{councilModels.length !== 1 ? 's' : ''}{' '}
