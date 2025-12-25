@@ -250,6 +250,15 @@ async def get_conversation(conversation_id: str):
     return conversation
 
 
+@app.delete("/api/conversations/{conversation_id}")
+async def delete_conversation(conversation_id: str):
+    """Delete a conversation."""
+    success = storage.delete_conversation(conversation_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    return {"status": "success", "message": "Conversation deleted"}
+
+
 @app.get("/api/conversations/{conversation_id}/export")
 async def export_conversation(conversation_id: str, format: str = "markdown"):
     """

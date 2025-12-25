@@ -8,6 +8,7 @@ export default function Sidebar({
   currentConversationId,
   onSelectConversation,
   onNewConversation,
+  onDeleteConversation,
   onOpenSettings,
 }) {
   const [exportingConversationId, setExportingConversationId] = useState(null);
@@ -71,6 +72,16 @@ export default function Sidebar({
                   ⬇️
                 </button>
               )}
+              <button
+                className="delete-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDeleteConversation(conv.id);
+                }}
+                title="Delete conversation"
+              >
+                🗑️
+              </button>
             </div>
           ))
         )}

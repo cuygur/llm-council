@@ -82,6 +82,19 @@
   margin-bottom: 8px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.message-cost {
+  font-family: monospace;
+  font-weight: normal;
+  text-transform: none;
+  opacity: 0.8;
+  background: var(--tab-bg);
+  padding: 2px 6px;
+  border-radius: 4px;
 }
 
 .user-message .message-content {

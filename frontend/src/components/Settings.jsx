@@ -305,6 +305,97 @@ export default function Settings({
                     <div className="mode-desc">AI chooses the best mode for your problem.</div>
                   </div>
                 </label>
+                <label className={`mode-option ${mode === 'adversarial' ? 'active' : ''}`}>
+                  <input
+                    type="radio"
+                    name="mode"
+                    value="adversarial"
+                    checked={mode === 'adversarial'}
+                    onChange={(e) => setMode(e.target.value)}
+                  />
+                  <div className="mode-info">
+                    <div className="mode-name">Adversarial</div>
+                    <div className="mode-desc">Prosecutor vs. Defense stress-test.</div>
+                  </div>
+                </label>
+                <label className={`mode-option ${mode === 'temporal' ? 'active' : ''}`}>
+                  <input
+                    type="radio"
+                    name="mode"
+                    value="temporal"
+                    checked={mode === 'temporal'}
+                    onChange={(e) => setMode(e.target.value)}
+                  />
+                  <div className="mode-info">
+                    <div className="mode-name">Temporal</div>
+                    <div className="mode-desc">Ancient wisdom meets Sci-Fi future.</div>
+                  </div>
+                </label>
+                <label className={`mode-option ${mode === 'multiverse' ? 'active' : ''}`}>
+                  <input
+                    type="radio"
+                    name="mode"
+                    value="multiverse"
+                    checked={mode === 'multiverse'}
+                    onChange={(e) => setMode(e.target.value)}
+                  />
+                  <div className="mode-info">
+                    <div className="mode-name">Multiverse</div>
+                    <div className="mode-desc">Radically different life perspectives.</div>
+                  </div>
+                </label>
+                <label className={`mode-option ${mode === 'rpg' ? 'active' : ''}`}>
+                  <input
+                    type="radio"
+                    name="mode"
+                    value="rpg"
+                    checked={mode === 'rpg'}
+                    onChange={(e) => setMode(e.target.value)}
+                  />
+                  <div className="mode-info">
+                    <div className="mode-name">RPG Party</div>
+                    <div className="mode-desc">Balanced Tank, Mage, and Rogue roles.</div>
+                  </div>
+                </label>
+                <label className={`mode-option ${mode === 'scale' ? 'active' : ''}`}>
+                  <input
+                    type="radio"
+                    name="mode"
+                    value="scale"
+                    checked={mode === 'scale'}
+                    onChange={(e) => setMode(e.target.value)}
+                  />
+                  <div className="mode-info">
+                    <div className="mode-name">Scale</div>
+                    <div className="mode-desc">Lens from Micro-detail to Cosmic-scale.</div>
+                  </div>
+                </label>
+                <label className={`mode-option ${mode === 'critics' ? 'active' : ''}`}>
+                  <input
+                    type="radio"
+                    name="mode"
+                    value="critics"
+                    checked={mode === 'critics'}
+                    onChange={(e) => setMode(e.target.value)}
+                  />
+                  <div className="mode-info">
+                    <div className="mode-name">Critics</div>
+                    <div className="mode-desc">Harsh Editor, End-User, and Rival.</div>
+                  </div>
+                </label>
+                <label className={`mode-option ${mode === 'socratic' ? 'active' : ''}`}>
+                  <input
+                    type="radio"
+                    name="mode"
+                    value="socratic"
+                    checked={mode === 'socratic'}
+                    onChange={(e) => setMode(e.target.value)}
+                  />
+                  <div className="mode-info">
+                    <div className="mode-name">Socratic</div>
+                    <div className="mode-desc">Forbidden from answering; only questions.</div>
+                  </div>
+                </label>
               </div>
             </section>
 

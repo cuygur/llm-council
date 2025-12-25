@@ -631,8 +631,37 @@ Instructions for Mental Model Mode:
 - Hats: White (Facts), Red (Feelings), Black (Cautions), Yellow (Benefits), Green (Creativity), Blue (Process).
 - Or other models like First Principles, Inversion, Second-Order Thinking.
 
+Instructions for Adversarial Mode:
+- Create a legal stress-test environment.
+- Assign roles like: The Prosecutor (finds every flaw/risk), The Defense (argues for the idea's strongest parts), and The Star Witness (provides objective evidence).
+- The Chairman ({chairman_model}) must be The Judge.
+
+Instructions for Temporal Mode:
+- Assign roles from different time periods.
+- Personas: The Ancient Philosopher (timeless wisdom), The Modern Pragmatist (current tech/tools), and The Sci-Fi Futurist (50-year prediction).
+
+Instructions for Multiverse Mode:
+- Assign radically different life perspectives.
+- Personas: The Billionaire (unlimited resources), The Minimalist (zero-cost/simplification), and The Guerilla Artist (creative subversion).
+
+Instructions for RPG Party Mode:
+- Assign classic gaming archetypes.
+- Personas: The Tank (risk mitigation/defense), The Mage (complex innovation/magic), and The Rogue (efficiency/shortcuts/cheats).
+
+Instructions for Scale Mode:
+- Assign roles based on the size of the lens.
+- Personas: The Micro-Manager (tiny details/seconds), The Structural Architect (foundations/workflows), and The Cosmologist (the grand scheme of the universe).
+
+Instructions for Critics Mode:
+- Assign roles focused on perfecting an output.
+- Personas: The Harsh Editor (cuts fluff), The End-User (focuses on fun/utility), and The Rival (analyzes how to beat you).
+
+Instructions for Socratic Mode:
+- FORBIDDEN from giving answers.
+- Assign roles as different types of Inquisitors who only ask deep, probing questions to force the user to find their own answer.
+
 Instructions for Auto Mode:
-- Analyze the user's question to determine if it requires domain-specific expertise (Specialist Mode) or strategic/structured analysis (Mental Model Mode).
+- Analyze the user's question to determine if it requires domain-specific expertise (Specialist Mode), strategic/structured analysis (Mental Model Mode), or any of the other specific modes above.
 - If the question is about a specific field (Health, Law, Engineering, History), use Specialist Mode.
 - If the question is about decision-making, problem-solving, or general strategy, use Mental Model Mode.
 - Once decided, follow the corresponding persona assignment instructions.

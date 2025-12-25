@@ -1,6 +1,6 @@
 """Model pricing and cost calculation utilities."""
 
-from typing import Dict, Optional
+from typing import Dict, Optional, List, Any
 
 # OpenRouter pricing (per million tokens) as of 2025
 # Updated pricing - check https://openrouter.ai/models for latest

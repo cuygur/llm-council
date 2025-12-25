@@ -124,7 +124,14 @@ export default function ChatInterface({
                 </div>
               ) : (
                 <div className="assistant-message">
-                  <div className="message-label">LLM Council</div>
+                  <div className="message-label">
+                    <span>LLM Council</span>
+                    {msg.metadata?.total_cost > 0 && (
+                      <span className="message-cost" title="Query Cost">
+                        (${msg.metadata.total_cost.toFixed(4)})
+                      </span>
+                    )}
+                  </div>
 
                   {/* Persona Resolution */}
                   {msg.loading?.resolving && (
