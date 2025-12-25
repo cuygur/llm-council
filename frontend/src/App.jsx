@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import ChatInterface from './components/ChatInterface';
+import Settings from './components/Settings';
 import { api } from './api';
 import './App.css';
 
@@ -9,11 +10,28 @@ function App() {
   const [currentConversationId, setCurrentConversationId] = useState(null);
   const [currentConversation, setCurrentConversation] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  // Load conversations on mount
+  // Load conversations and config on mount
   useEffect(() => {
     loadConversations();
+    loadConfigFromStorage();
   }, []);
+
+  // Load saved configuration from localStorage and apply to backend
+  const loadConfigFromStorage = async () => {
+    try {
+      const savedConfig = localStorage.getItem('llm-council-config');
+      if (savedConfig) {
+        const { councilModels, chairmanModel } = JSON.parse(savedConfig);
+        // Apply saved config to backend
+        await api.updateConfig(councilModels, chairmanModel);
+        console.log('Loaded saved configuration from localStorage');
+      }
+    } catch (error) {
+      console.error('Failed to load saved configuration:', error);
+    }
+  };
 
   // Load conversation details when selected
   useEffect(() => {
@@ -40,9 +58,9 @@ function App() {
     }
   };
 
-  const handleNewConversation = async () => {
+  const handleNewConversation = async (councilModels, chairmanModel, modelPersonas, mode) => {
     try {
-      const newConv = await api.createConversation();
+      const newConv = await api.createConversation(councilModels, chairmanModel, modelPersonas, mode);
       setConversations([
         { id: newConv.id, created_at: newConv.created_at, message_count: 0 },
         ...conversations,
@@ -50,11 +68,27 @@ function App() {
       setCurrentConversationId(newConv.id);
     } catch (error) {
       console.error('Failed to create conversation:', error);
+      throw error;
     }
   };
 
   const handleSelectConversation = (id) => {
     setCurrentConversationId(id);
+  };
+
+  const handleDeleteConversation = async (id) => {
+    if (!confirm('Are you sure you want to delete this conversation?')) return;
+
+    try {
+      await api.deleteConversation(id);
+      setConversations(conversations.filter((c) => c.id !== id));
+      if (currentConversationId === id) {
+        setCurrentConversationId(null);
+        setCurrentConversation(null);
+      }
+    } catch (error) {
+      console.error('Failed to delete conversation:', error);
+    }
   };
 
   const handleSendMessage = async (content) => {
@@ -77,6 +111,7 @@ function App() {
         stage3: null,
         metadata: null,
         loading: {
+          resolving: false,
           stage1: false,
           stage2: false,
           stage3: false,
@@ -92,10 +127,20 @@ function App() {
       // Send message with streaming
       await api.sendMessageStream(currentConversationId, content, (eventType, event) => {
         switch (eventType) {
+          case 'resolving_personas':
+            setCurrentConversation((prev) => {
+              const messages = [...prev.messages];
+              const lastMsg = messages[messages.length - 1];
+              lastMsg.loading.resolving = true;
+              return { ...prev, messages };
+            });
+            break;
+
           case 'stage1_start':
             setCurrentConversation((prev) => {
               const messages = [...prev.messages];
               const lastMsg = messages[messages.length - 1];
+              lastMsg.loading.resolving = false;
               lastMsg.loading.stage1 = true;
               return { ...prev, messages };
             });
@@ -127,6 +172,16 @@ function App() {
               lastMsg.stage2 = event.data;
               lastMsg.metadata = event.metadata;
               lastMsg.loading.stage2 = false;
+              return { ...prev, messages };
+            });
+            break;
+
+          case 'stage2_5_start':
+            setCurrentConversation((prev) => {
+              const messages = [...prev.messages];
+              const lastMsg = messages[messages.length - 1];
+              // Re-enable stage1 loading to show we are updating answers
+              lastMsg.loading.stage1 = true;
               return { ...prev, messages };
             });
             break;
@@ -188,11 +243,17 @@ function App() {
         currentConversationId={currentConversationId}
         onSelectConversation={handleSelectConversation}
         onNewConversation={handleNewConversation}
+        onDeleteConversation={handleDeleteConversation}
+        onOpenSettings={() => setIsSettingsOpen(true)}
       />
       <ChatInterface
         conversation={currentConversation}
         onSendMessage={handleSendMessage}
         isLoading={isLoading}
+      />
+      <Settings
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
       />
     </div>
   );

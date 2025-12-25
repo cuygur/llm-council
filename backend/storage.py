@@ -18,23 +18,43 @@ def get_conversation_path(conversation_id: str) -> str:
     return os.path.join(DATA_DIR, f"{conversation_id}.json")
 
 
-def create_conversation(conversation_id: str) -> Dict[str, Any]:
+def create_conversation(
+    conversation_id: str,
+    council_models: Optional[List[str]] = None,
+    chairman_model: Optional[str] = None,
+    model_personas: Optional[Dict[str, str]] = None,
+    mode: str = "standard"
+) -> Dict[str, Any]:
     """
     Create a new conversation.
 
     Args:
         conversation_id: Unique identifier for the conversation
+        council_models: Optional list of models for this conversation
+        chairman_model: Optional chairman model for this conversation
+        model_personas: Optional mapping of model ID to persona
+        mode: Initial mode for the council
 
     Returns:
         New conversation dict
     """
     ensure_data_dir()
 
+    from .config import COUNCIL_MODELS, CHAIRMAN_MODEL
+
+    # Ensure we have valid models
+    final_council = council_models if council_models is not None else COUNCIL_MODELS
+    final_chairman = chairman_model if chairman_model is not None else CHAIRMAN_MODEL
+
     conversation = {
         "id": conversation_id,
         "created_at": datetime.utcnow().isoformat(),
         "title": "New Conversation",
-        "messages": []
+        "messages": [],
+        "council_models": final_council,
+        "chairman_model": final_chairman,
+        "model_personas": model_personas or {},
+        "mode": mode
     }
 
     # Save to file
@@ -131,7 +151,8 @@ def add_assistant_message(
     conversation_id: str,
     stage1: List[Dict[str, Any]],
     stage2: List[Dict[str, Any]],
-    stage3: Dict[str, Any]
+    stage3: Dict[str, Any],
+    metadata: Optional[Dict[str, Any]] = None
 ):
     """
     Add an assistant message with all 3 stages to a conversation.
@@ -141,17 +162,23 @@ def add_assistant_message(
         stage1: List of individual model responses
         stage2: List of model rankings
         stage3: Final synthesized response
+        metadata: Optional metadata (rankings, mappings, etc.)
     """
     conversation = get_conversation(conversation_id)
     if conversation is None:
         raise ValueError(f"Conversation {conversation_id} not found")
 
-    conversation["messages"].append({
+    message = {
         "role": "assistant",
         "stage1": stage1,
         "stage2": stage2,
         "stage3": stage3
-    })
+    }
+    
+    if metadata:
+        message["metadata"] = metadata
+
+    conversation["messages"].append(message)
 
     save_conversation(conversation)
 
@@ -170,3 +197,20 @@ def update_conversation_title(conversation_id: str, title: str):
 
     conversation["title"] = title
     save_conversation(conversation)
+
+
+def delete_conversation(conversation_id: str) -> bool:
+    """
+    Delete a conversation from storage.
+
+    Args:
+        conversation_id: Unique identifier for the conversation
+
+    Returns:
+        True if deleted, False if not found
+    """
+    path = get_conversation_path(conversation_id)
+    if os.path.exists(path):
+        os.remove(path)
+        return True
+    return False

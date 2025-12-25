@@ -1,87 +1,85 @@
-# LLM Council
+# 🏛️ LLM Council
 
-![llmcouncil](header.jpg)
+![LLM Council Header](header.jpg)
 
-The idea of this repo is that instead of asking a question to your favorite LLM provider (e.g. OpenAI GPT 5.1, Google Gemini 3.0 Pro, Anthropic Claude Sonnet 4.5, xAI Grok 4, eg.c), you can group them into your "LLM Council". This repo is a simple, local web app that essentially looks like ChatGPT except it uses OpenRouter to send your query to multiple LLMs, it then asks them to review and rank each other's work, and finally a Chairman LLM produces the final response.
+**LLM Council** is a powerful decision-making and problem-solving framework that leverages the collective intelligence of multiple Large Language Models (LLMs). Instead of trusting a single model, the Council orchestrates a multi-stage process where models provide independent opinions, critique each other, and arrive at a synthesized final answer.
 
-In a bit more detail, here is what happens when you submit a query:
+## 🌟 Key Features
 
-1. **Stage 1: First opinions**. The user query is given to all LLMs individually, and the responses are collected. The individual responses are shown in a "tab view", so that the user can inspect them all one by one.
-2. **Stage 2: Review**. Each individual LLM is given the responses of the other LLMs. Under the hood, the LLM identities are anonymized so that the LLM can't play favorites when judging their outputs. The LLM is asked to rank them in accuracy and insight.
-3. **Stage 3: Final response**. The designated Chairman of the LLM Council takes all of the model's responses and compiles them into a single final answer that is presented to the user.
+*   **The 3-Stage Process:** Orchestrates a rigorous flow of independent thought, peer review, and final synthesis.
+*   **Dynamic Council Modes:** Specialized operating modes like *Adversarial (The Trial)*, *Temporal (Past to Future)*, *Multiverse*, and *Socratic* that dynamically assign expert personas to models.
+*   **Rebuttal Round (Stage 2.5):** Models see critiques of their work and are given a chance to refine their answers before the final synthesis.
+*   **Universal Model Support:** Access hundreds of LLMs (GPT-4o, Claude 3.5, Gemini 3, Grok, DeepSeek, etc.) via a single OpenRouter integration.
+*   **Cost & Token Transparency:** Real-time pre-flight cost estimation while you type, and exact actual spending tracking per message and session.
+*   **Modern Chat Interface:** A sleek, reactive UI with tabbed views for inspecting individual model thinking and peer rankings.
+*   **Conversation Management:** Full history support with easy export (Markdown, JSON, HTML) and session cleanup.
 
-## Vibe Code Alert
+## ⚙️ How it Works: The 3-Stage Orchestration
 
-This project was 99% vibe coded as a fun Saturday hack because I wanted to explore and evaluate a number of LLMs side by side in the process of [reading books together with LLMs](https://x.com/karpathy/status/1990577951671509438). It's nice and useful to see multiple responses side by side, and also the cross-opinions of all LLMs on each other's outputs. I'm not going to support it in any way, it's provided here as is for other people's inspiration and I don't intend to improve it. Code is ephemeral now and libraries are over, ask your LLM to change it in whatever way you like.
+1.  **Stage 1: Independent Responses**
+    Each council member is given the query independently. If a **Council Mode** is active, models are assigned specialized personas (e.g., a "Neuroscientist" or "Venture Capitalist") tailored to your specific problem.
+2.  **Stage 2: Peer Review & Ranking**
+    The models review each other's responses anonymously. They provide detailed critiques and rank the answers from best to worst.
+3.  **Stage 2.5: The Rebuttal**
+    Models receive the peer feedback directed at them and are given one opportunity to update and "fix" their original answers based on valid critiques.
+4.  **Stage 3: Final Synthesis**
+    A designated **Chairman model** (assigned a synthesis-focused persona) reviews all original answers, peer rankings, and revised responses to produce a single, comprehensive, and objective final determination.
 
-## Setup
+## 🎭 Council Modes
 
-### 1. Install Dependencies
+Beyond standard chat, you can summon specialized strategic frameworks:
 
-The project uses [uv](https://docs.astral.sh/uv/) for project management.
+*   **⚖️ Adversarial:** A legal stress-test with a Prosecutor, Defense, and Star Witness.
+*   **⏳ Temporal:** Wisdom across time, featuring an Ancient Philosopher and a Sci-Fi Futurist.
+*   **⚔️ RPG Party:** Balanced archetypes including The Tank (Risk), The Mage (Innovation), and The Rogue (Efficiency).
+*   **🔍 Scale:** Analysis through different lenses, from Micro-detail to Cosmic-scale.
+*   **🎭 Critics:** Specifically for perfecting outputs with a Harsh Editor and a competitive Rival.
+*   **🧘 Socratic:** The council is forbidden from giving answers and will only ask deep, probing questions.
+*   **🤖 Auto:** The AI analyzes your query and automatically chooses the most effective mode for you.
 
-**Backend:**
+## 🚀 Getting Started
+
+### 1. Prerequisites
+*   [Python 3.10+](https://www.python.org/)
+*   [Node.js & npm](https://nodejs.org/)
+*   [uv](https://docs.astral.sh/uv/) (Recommended for lightning-fast Python management)
+
+### 2. Installation
 ```bash
+# Clone the repository
+git clone https://github.com/cihanuygur/llm-council.git
+cd llm-council
+
+# Install backend dependencies
 uv sync
-```
 
-**Frontend:**
-```bash
+# Install frontend dependencies
 cd frontend
 npm install
 cd ..
 ```
 
-### 2. Configure API Key
-
-Create a `.env` file in the project root:
-
-```bash
-OPENROUTER_API_KEY=sk-or-v1-...
+### 3. Configuration
+Create a `.env` file in the root directory:
+```env
+OPENROUTER_API_KEY=your_openrouter_key_here
 ```
+*Get your key at [openrouter.ai](https://openrouter.ai/).*
 
-Get your API key at [openrouter.ai](https://openrouter.ai/). Make sure to purchase the credits you need, or sign up for automatic top up.
-
-### 3. Configure Models (Optional)
-
-Edit `backend/config.py` to customize the council:
-
-```python
-COUNCIL_MODELS = [
-    "openai/gpt-5.1",
-    "google/gemini-3-pro-preview",
-    "anthropic/claude-sonnet-4.5",
-    "x-ai/grok-4",
-]
-
-CHAIRMAN_MODEL = "google/gemini-3-pro-preview"
-```
-
-## Running the Application
-
-**Option 1: Use the start script**
+### 4. Running the App
+The simplest way is to use the provided start script:
 ```bash
+chmod +x start.sh
 ./start.sh
 ```
+*This will start the FastAPI backend on port 8001 and the Vite frontend on port 5173.*
 
-**Option 2: Run manually**
+## 🛠️ Technical Stack
 
-Terminal 1 (Backend):
-```bash
-uv run python -m backend.main
-```
+*   **Backend:** FastAPI (Python), Async Orchestration, httpx.
+*   **Frontend:** React, Vite, React-Markdown, SSE (Server-Sent Events) for real-time streaming.
+*   **Storage:** Local JSON-based persistent storage.
+*   **Models:** Orchestrated via OpenRouter Chat Completions API.
 
-Terminal 2 (Frontend):
-```bash
-cd frontend
-npm run dev
-```
-
-Then open http://localhost:5173 in your browser.
-
-## Tech Stack
-
-- **Backend:** FastAPI (Python 3.10+), async httpx, OpenRouter API
-- **Frontend:** React + Vite, react-markdown for rendering
-- **Storage:** JSON files in `data/conversations/`
-- **Package Management:** uv for Python, npm for JavaScript
+## 📄 License
+MIT License - feel free to use, modify, and build upon this framework.

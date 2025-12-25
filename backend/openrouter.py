@@ -2,13 +2,52 @@
 
 import httpx
 from typing import List, Dict, Any, Optional
-from .config import OPENROUTER_API_KEY, OPENROUTER_API_URL
+from .config import OPENROUTER_API_KEY, OPENROUTER_API_URL, OPENROUTER_MODELS_URL
+from .reasoning import get_model_timeout, parse_reasoning_response, is_reasoning_model
+
+
+async def fetch_available_models() -> List[Dict[str, str]]:
+    """
+    Fetch list of available models from OpenRouter.
+
+    Returns:
+        List of model dicts with id, name, provider, description
+    """
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get(OPENROUTER_MODELS_URL)
+            response.raise_for_status()
+            
+            data = response.json()
+            models_data = data.get('data', [])
+            
+            formatted_models = []
+            for model in models_data:
+                # Derive provider from ID (e.g. "anthropic/claude" -> "Anthropic")
+                model_id = model.get('id', '')
+                provider = model_id.split('/')[0].capitalize() if '/' in model_id else 'Unknown'
+                
+                formatted_models.append({
+                    "id": model_id,
+                    "name": model.get('name', model_id),
+                    "provider": provider,
+                    "description": model.get('description', '')
+                })
+                
+            # Sort by name
+            formatted_models.sort(key=lambda x: x['name'])
+            
+            return formatted_models
+
+    except Exception as e:
+        print(f"Error fetching models: {e}")
+        return []
 
 
 async def query_model(
     model: str,
     messages: List[Dict[str, str]],
-    timeout: float = 120.0
+    timeout: Optional[float] = None
 ) -> Optional[Dict[str, Any]]:
     """
     Query a single model via OpenRouter API.
@@ -21,6 +60,10 @@ async def query_model(
     Returns:
         Response dict with 'content' and optional 'reasoning_details', or None if failed
     """
+    # Use model-specific timeout if not provided
+    if timeout is None:
+        timeout = get_model_timeout(model)
+
     headers = {
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
         "Content-Type": "application/json",
@@ -43,14 +86,42 @@ async def query_model(
             data = response.json()
             message = data['choices'][0]['message']
 
+            # Extract token usage
+            usage = data.get('usage', {})
+
+            # Get content
+            content = message.get('content', '')
+
+            # Parse reasoning if it's a reasoning model
+            thinking = ""
+            answer = content
+
+            if is_reasoning_model(model):
+                parsed = parse_reasoning_response(content)
+                thinking = parsed['thinking']
+                answer = parsed['answer']
+
             return {
-                'content': message.get('content'),
-                'reasoning_details': message.get('reasoning_details')
+                'content': answer,  # Final answer without thinking tags
+                'thinking': thinking,  # Extracted thinking process
+                'reasoning_details': message.get('reasoning_details'),
+                'is_reasoning_model': is_reasoning_model(model),
+                'usage': {
+                    'prompt_tokens': usage.get('prompt_tokens', 0),
+                    'completion_tokens': usage.get('completion_tokens', 0),
+                    'total_tokens': usage.get('total_tokens', 0)
+                }
             }
 
     except Exception as e:
         print(f"Error querying model {model}: {e}")
-        return None
+        return {
+            'error': str(e),
+            'content': f"Error: {str(e)}",
+            'thinking': "",
+            'is_reasoning_model': is_reasoning_model(model),
+            'usage': {}
+        }
 
 
 async def query_models_parallel(

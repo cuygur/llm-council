@@ -1,14 +1,14 @@
 .stage {
   margin: 24px 0;
   padding: 20px;
-  background: #fafafa;
+  background: var(--bg-sidebar);
   border-radius: 8px;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--border-color);
 }
 
 .stage-title {
   margin: 0 0 16px 0;
-  color: #333;
+  color: var(--text-color);
   font-size: 16px;
   font-weight: 600;
 }
@@ -22,44 +22,213 @@
 
 .tab {
   padding: 8px 16px;
-  background: #ffffff;
-  border: 1px solid #d0d0d0;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
   border-radius: 6px 6px 0 0;
-  color: #666;
+  color: var(--text-muted);
   cursor: pointer;
   font-size: 14px;
   transition: all 0.2s;
 }
 
 .tab:hover {
-  background: #f0f0f0;
-  color: #333;
-  border-color: #4a90e2;
+  background: var(--tab-bg);
+  color: var(--text-color);
+  border-color: var(--primary-color);
 }
 
 .tab.active {
-  background: #ffffff;
-  color: #4a90e2;
-  border-color: #4a90e2;
-  border-bottom-color: #ffffff;
+  background: var(--primary-color);
+  color: #ffffff;
+  border-color: var(--primary-color);
   font-weight: 600;
 }
 
-.tab-content {
-  background: #ffffff;
+.tab.error {
+  border-bottom: 2px solid #e74c3c;
+  color: #c0392b;
+}
+
+.tab.error.active {
+  border-color: #e74c3c;
+  border-bottom-color: #ffffff;
+  color: #c0392b;
+}
+
+.error-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #fcebea;
+  color: #c0392b;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: system-ui, -apple-system, sans-serif;
+  border: 1px solid #fadbd8;
+}
+
+.error-message {
+  background-color: #fff5f5;
+  border: 1px solid #feb2b2;
+  color: #c53030;
   padding: 16px;
   border-radius: 6px;
-  border: 1px solid #e0e0e0;
+  margin-top: 16px;
+}
+
+.error-message strong {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.error-message p {
+  margin: 0;
+  font-size: 14px;
+  color: #e53e3e;
+}
+
+.persona-badge {
+  background: #f0f4ff;
+  border: 1px solid #d0e1ff;
+  color: #4a90e2;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  margin-bottom: 16px;
+  font-style: italic;
+}
+
+.rebuttal-badge {
+  background: #fff8e1;
+  border: 1px solid #ffe0b2;
+  color: #f57c00;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+[data-theme='dark'] .persona-badge {
+  background: #1a202c;
+  border-color: #2c5282;
+  color: #90cdf4;
+}
+
+[data-theme='dark'] .rebuttal-badge {
+  background: #332b00;
+  border-color: #795548;
+  color: #ffcc80;
+}
+
+[data-theme='dark'] .tab.error {
+  color: #e74c3c;
+  border-bottom-color: #e74c3c;
+}
+
+[data-theme='dark'] .tab.error.active {
+  background: #3c1f1f;
+  color: #ff6b6b;
+  border-color: #e74c3c;
+}
+
+[data-theme='dark'] .error-badge {
+  background: #3c1f1f;
+  color: #ff6b6b;
+  border-color: #742a2a;
+}
+
+[data-theme='dark'] .error-message {
+  background-color: #2a1212;
+  border-color: #742a2a;
+  color: #ff6b6b;
+}
+
+[data-theme='dark'] .error-message p {
+  color: #fc8181;
+}
+
+.tab-content {
+  background: var(--bg-color);
+  padding: 16px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
 }
 
 .model-name {
-  color: #888;
+  color: var(--text-muted);
   font-size: 12px;
   margin-bottom: 12px;
   font-family: monospace;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.reasoning-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: system-ui, -apple-system, sans-serif;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+}
+
+.thinking-section {
+  background: var(--accent-color);
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0;
+  margin: 16px 0;
+}
+
+.thinking-summary {
+  padding: 12px 16px;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--primary-color);
+  -webkit-user-select: none;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.2s;
+}
+
+.thinking-summary:hover {
+  background: var(--tab-bg);
+}
+
+.thinking-section[open] .thinking-summary {
+  border-bottom: 2px solid var(--border-color);
+  margin-bottom: 0;
+}
+
+.thinking-content {
+  padding: 16px;
+  color: var(--text-color);
+  background: var(--bg-color);
+  border-radius: 0 0 6px 6px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.thinking-content p:first-child {
+  margin-top: 0;
+}
+
+.thinking-content p:last-child {
+  margin-bottom: 0;
 }
 
 .response-text {
-  color: #333;
+  color: var(--text-color);
   line-height: 1.6;
 }

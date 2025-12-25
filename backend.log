@@ -1,0 +1,11 @@
+INFO:     Started server process [97938]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+INFO:     127.0.0.1:51033 - "DELETE /api/conversations/7137bbfa-7528-4ee8-97d3-2289173cadd4 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51249 - "OPTIONS /api/config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51250 - "GET /api/conversations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51249 - "POST /api/config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51252 - "GET /api/conversations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51253 - "OPTIONS /api/config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51253 - "POST /api/config HTTP/1.1" 200 OK

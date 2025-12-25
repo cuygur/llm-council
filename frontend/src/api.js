@@ -19,13 +19,18 @@ export const api = {
   /**
    * Create a new conversation.
    */
-  async createConversation() {
+  async createConversation(councilModels, chairmanModel, modelPersonas, mode = 'standard') {
     const response = await fetch(`${API_BASE}/api/conversations`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({}),
+      body: JSON.stringify({
+        council_models: councilModels,
+        chairman_model: chairmanModel,
+        model_personas: modelPersonas,
+        mode: mode
+      }),
     });
     if (!response.ok) {
       throw new Error('Failed to create conversation');
@@ -42,6 +47,22 @@ export const api = {
     );
     if (!response.ok) {
       throw new Error('Failed to get conversation');
+    }
+    return response.json();
+  },
+
+  /**
+   * Delete a specific conversation.
+   */
+  async deleteConversation(conversationId) {
+    const response = await fetch(
+      `${API_BASE}/api/conversations/${conversationId}`,
+      {
+        method: 'DELETE',
+      }
+    );
+    if (!response.ok) {
+      throw new Error('Failed to delete conversation');
     }
     return response.json();
   },
@@ -111,5 +132,67 @@ export const api = {
         }
       }
     }
+  },
+
+  /**
+   * Estimate the cost of a query.
+   */
+  async estimateCost(content, conversationId = null) {
+    const response = await fetch(`${API_BASE}/api/estimate-cost`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        content,
+        conversation_id: conversationId 
+      }),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to estimate cost');
+    }
+    return response.json();
+  },
+
+  /**
+   * Get available models from OpenRouter.
+   */
+  async getAvailableModels() {
+    const response = await fetch(`${API_BASE}/api/models`);
+    if (!response.ok) {
+      throw new Error('Failed to get available models');
+    }
+    return response.json();
+  },
+
+  /**
+   * Get current council configuration.
+   */
+  async getConfig() {
+    const response = await fetch(`${API_BASE}/api/config`);
+    if (!response.ok) {
+      throw new Error('Failed to get config');
+    }
+    return response.json();
+  },
+
+  /**
+   * Update council configuration.
+   */
+  async updateConfig(councilModels, chairmanModel) {
+    const response = await fetch(`${API_BASE}/api/config`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        council_models: councilModels,
+        chairman_model: chairmanModel,
+      }),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to update config');
+    }
+    return response.json();
   },
 };
