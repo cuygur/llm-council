@@ -92,18 +92,18 @@
 }
 
 .settings-error {
-  background-color: #fee;
-  border: 1px solid #fcc;
-  color: #c33;
+  background-color: var(--error-bg);
+  border: 1px solid var(--error-border);
+  color: var(--error-text);
   padding: 12px;
   border-radius: 6px;
   margin-bottom: 16px;
 }
 
 .settings-success {
-  background-color: #efe;
-  border: 1px solid #cfc;
-  color: #3a3;
+  background-color: var(--success-bg);
+  border: 1px solid var(--success-border);
+  color: var(--success-text);
   padding: 12px;
   border-radius: 6px;
   margin-bottom: 16px;

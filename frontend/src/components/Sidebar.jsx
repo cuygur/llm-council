@@ -10,6 +10,8 @@ export default function Sidebar({
   onNewConversation,
   onDeleteConversation,
   onOpenSettings,
+  isDarkMode,
+  setIsDarkMode,
 }) {
   const [exportingConversationId, setExportingConversationId] = useState(null);
   const [exportingConversationTitle, setExportingConversationTitle] = useState(null);
@@ -94,6 +96,8 @@ export default function Sidebar({
           onSaveOverride={handleCreateNewConversation}
           title="Start New Conversation"
           saveButtonText="Start Conversation"
+          isDarkMode={isDarkMode}
+          setIsDarkMode={setIsDarkMode}
         />
       )}
 

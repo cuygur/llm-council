@@ -7,7 +7,9 @@ export default function Settings({
   onClose,
   onSaveOverride,
   title = "Council Configuration",
-  saveButtonText = "Save Configuration"
+  saveButtonText = "Save Configuration",
+  isDarkMode,
+  setIsDarkMode
 }) {
   const [availableModels, setAvailableModels] = useState([]);
   const [councilModels, setCouncilModels] = useState([]);
@@ -22,11 +24,6 @@ export default function Settings({
   const [newPresetName, setNewPresetName] = useState('');
   const [modelSearch, setModelSearch] = useState('');
   const [showAllModels, setShowAllModels] = useState(false);
-
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    return document.body.getAttribute('data-theme') === 'dark' ||
-      localStorage.getItem('llm-council-theme') === 'dark';
-  });
 
   // Load available models and current config
   useEffect(() => {
@@ -191,21 +188,19 @@ export default function Settings({
               <div className="settings-success">{successMessage}</div>
             )}
 
-            {!onSaveOverride && (
-              <section className="settings-section">
-                <h3>Appearance</h3>
-                <div className="setting-control">
-                  <label className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={isDarkMode}
-                      onChange={(e) => setIsDarkMode(e.target.checked)}
-                    />
-                    Dark Mode
-                  </label>
-                </div>
-              </section>
-            )}
+            <section className="settings-section">
+              <h3>Appearance</h3>
+              <div className="setting-control">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={isDarkMode}
+                    onChange={(e) => setIsDarkMode(e.target.checked)}
+                  />
+                  Dark Mode
+                </label>
+              </div>
+            </section>
 
             <section className="settings-section">
               <h3>Presets</h3>

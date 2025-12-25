@@ -12,6 +12,20 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
+  // Theme management
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const savedTheme = localStorage.getItem('llm-council-theme');
+    if (savedTheme) return savedTheme === 'dark';
+    return document.body.getAttribute('data-theme') === 'dark';
+  });
+
+  // Apply theme on change
+  useEffect(() => {
+    const theme = isDarkMode ? 'dark' : 'light';
+    document.body.setAttribute('data-theme', theme);
+    localStorage.setItem('llm-council-theme', theme);
+  }, [isDarkMode]);
+
   // Load conversations and config on mount
   useEffect(() => {
     loadConversations();
@@ -245,6 +259,8 @@ function App() {
         onNewConversation={handleNewConversation}
         onDeleteConversation={handleDeleteConversation}
         onOpenSettings={() => setIsSettingsOpen(true)}
+        isDarkMode={isDarkMode}
+        setIsDarkMode={setIsDarkMode}
       />
       <ChatInterface
         conversation={currentConversation}
@@ -254,6 +270,8 @@ function App() {
       <Settings
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
+        isDarkMode={isDarkMode}
+        setIsDarkMode={setIsDarkMode}
       />
     </div>
   );

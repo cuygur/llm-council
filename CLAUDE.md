@@ -73,7 +73,7 @@ LLM Council is a 3-stage deliberation system where multiple LLMs collaboratively
 - Green-tinted background (#f0fff0) to highlight conclusion
 
 **Styling (`*.css`)**
-- Light mode theme (not dark mode)
+- Dark mode and Light mode support
 - Primary color: #4a90e2 (blue)
 - Global markdown styling in `index.css` with `.markdown-content` class
 - 12px padding on all markdown content to prevent cluttered appearance

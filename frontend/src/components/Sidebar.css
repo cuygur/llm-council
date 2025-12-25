@@ -130,8 +130,8 @@
 
 .delete-btn:hover {
   opacity: 1;
-  background: #fee;
-  color: #c33;
+  background: var(--error-bg);
+  color: var(--error-text);
   transform: scale(1.1);
 }
 
