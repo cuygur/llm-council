@@ -29,3 +29,14 @@ INFO:     127.0.0.1:59813 - "GET /api/config HTTP/1.1" 200 OK
 INFO:     127.0.0.1:59816 - "GET /api/config HTTP/1.1" 200 OK
 INFO:     127.0.0.1:59814 - "GET /api/models HTTP/1.1" 200 OK
 INFO:     127.0.0.1:59816 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60080 - "GET /api/config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60080 - "GET /api/config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60079 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60080 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60131 - "OPTIONS /api/conversations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60131 - "POST /api/conversations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60131 - "GET /api/conversations/070a9577-5edc-482b-ab66-ef0dcc749db5 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60242 - "OPTIONS /api/conversations/070a9577-5edc-482b-ab66-ef0dcc749db5/message/stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60242 - "POST /api/conversations/070a9577-5edc-482b-ab66-ef0dcc749db5/message/stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60242 - "GET /api/conversations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60242 - "GET /api/conversations HTTP/1.1" 200 OK
