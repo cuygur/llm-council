@@ -3,7 +3,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from fastapi.responses import StreamingResponse
 from typing import List, Dict, Any, Optional
 import uuid
 import json
@@ -15,6 +15,14 @@ from .openrouter import fetch_available_models
 from .council import run_full_council, generate_conversation_title, stage1_collect_responses, stage2_collect_rankings, stage2_5_rebuttal, stage3_synthesize_final, calculate_aggregate_rankings
 from .export import export_to_markdown, export_to_json, export_to_html
 from .pricing import estimate_query_cost, format_cost
+from .schemas import (
+    CreateConversationRequest, 
+    SendMessageRequest, 
+    ConfigUpdateRequest, 
+    CostEstimateRequest, 
+    ConversationMetadata, 
+    Conversation
+)
 
 app = FastAPI(title="LLM Council API")
 
@@ -28,49 +36,6 @@ app.add_middleware(
 )
 
 
-class CreateConversationRequest(BaseModel):
-    """Request to create a new conversation."""
-    council_models: Optional[List[str]] = None
-    chairman_model: Optional[str] = None
-    model_personas: Optional[Dict[str, str]] = None
-    mode: Optional[str] = "standard"
-
-
-class SendMessageRequest(BaseModel):
-    """Request to send a message in a conversation."""
-    content: str
-
-
-class ConfigUpdateRequest(BaseModel):
-    """Request to update council configuration."""
-    council_models: List[str]
-    chairman_model: str
-
-
-class CostEstimateRequest(BaseModel):
-    """Request to estimate cost of a query."""
-    content: str
-    conversation_id: Optional[str] = None
-
-
-class ConversationMetadata(BaseModel):
-    """Conversation metadata for list view."""
-    id: str
-    created_at: str
-    title: str
-    message_count: int
-
-
-class Conversation(BaseModel):
-    """Full conversation with all messages."""
-    id: str
-    created_at: str
-    title: str
-    messages: List[Dict[str, Any]]
-    council_models: Optional[List[str]] = None
-    chairman_model: Optional[str] = None
-    model_personas: Optional[Dict[str, str]] = None
-    mode: Optional[str] = "standard"
 
 
 @app.get("/")
