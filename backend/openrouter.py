@@ -1,5 +1,6 @@
 """OpenRouter API client for making LLM requests."""
 
+import json
 import httpx
 from typing import List, Dict, Any, Optional
 from .config import OPENROUTER_API_KEY, OPENROUTER_API_URL, OPENROUTER_MODELS_URL
@@ -39,8 +40,14 @@ async def fetch_available_models() -> List[Dict[str, str]]:
             
             return formatted_models
 
+    except httpx.HTTPError as e:
+        print(f"HTTP error fetching models: {e}")
+        return []
+    except json.JSONDecodeError as e:
+        print(f"JSON decode error fetching models: {e}")
+        return []
     except Exception as e:
-        print(f"Error fetching models: {e}")
+        print(f"Unexpected error fetching models: {e}")
         return []
 
 
@@ -113,8 +120,17 @@ async def query_model(
                 }
             }
 
+    except httpx.HTTPError as e:
+        print(f"HTTP error querying model {model}: {e}")
+        return {
+            'error': f"HTTP Error: {str(e)}",
+            'content': f"Error: {str(e)}",
+            'thinking': "",
+            'is_reasoning_model': is_reasoning_model(model),
+            'usage': {}
+        }
     except Exception as e:
-        print(f"Error querying model {model}: {e}")
+        print(f"Unexpected error querying model {model}: {e}")
         return {
             'error': str(e),
             'content': f"Error: {str(e)}",

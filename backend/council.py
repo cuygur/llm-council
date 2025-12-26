@@ -132,6 +132,21 @@ def parse_ranking_from_text(ranking_text: str) -> List[str]:
         List of response labels in ranked order
     """
     import re
+    import json
+
+    # Method 1: Try to find and parse a JSON block
+    # Look for ```json ... ``` or just { ... } at the end
+    json_match = re.search(r'```json\s*(\{.*?\})\s*```', ranking_text, re.DOTALL)
+    if not json_match:
+        json_match = re.search(r'(\{.*"ranking".*\})', ranking_text, re.DOTALL)
+    
+    if json_match:
+        try:
+            data = json.loads(json_match.group(1))
+            if "ranking" in data and isinstance(data["ranking"], list):
+                return data["ranking"]
+        except:
+            pass
 
     # Normalize text (handle common variations)
     text = ranking_text.replace("**", "") # Remove bolding which can mess up regex
@@ -216,21 +231,18 @@ Your task:
 2. Then, at the very end of your response, provide a final ranking.
 
 IMPORTANT: Your final ranking MUST be formatted EXACTLY as follows:
-- Start with the line "FINAL RANKING:" (all caps, with colon)
-- Then list the responses from best to worst as a numbered list
-- Each line should be: number, period, space, then ONLY the response label (e.g., "1. Response A")
-- Do not add any other text or explanations in the ranking section
 
-Example of the correct format for your ENTIRE response:
+1. Provide your written evaluation first.
+2. End your response with a JSON block containing the ranking.
 
-Response A provides good detail on X but misses Y...
-Response B is accurate but lacks depth on Z...
-Response C offers the most comprehensive answer...
+JSON Format:
+```json
+{
+  "ranking": ["Response C", "Response A", "Response B"]
+}
+```
 
-FINAL RANKING:
-1. Response C
-2. Response A
-3. Response B
+The "ranking" list must contain the response labels in order from best to worst.
 
 Now provide your evaluation and ranking:"""
 

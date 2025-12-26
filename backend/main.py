@@ -21,7 +21,7 @@ app = FastAPI(title="LLM Council API")
 # Enable CORS for local development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origins=["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173", "http://127.0.0.1:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -330,8 +330,16 @@ async def send_message(conversation_id: str, request: SendMessageRequest):
     # Check if this is the first message
     is_first_message = len(conversation["messages"]) == 0
 
+    # Process attachments if present
+    full_content = request.content
+    if request.attachments:
+        for attachment in request.attachments:
+            name = attachment.get("name", "Unknown File")
+            content = attachment.get("content", "")
+            full_content += f"\n\n---\n**Attached File:** {name}\n\n```\n{content}\n```\n---"
+
     # Add user message
-    storage.add_user_message(conversation_id, request.content)
+    storage.add_user_message(conversation_id, full_content)
 
     # If this is the first message, generate a title
     if is_first_message:
@@ -389,8 +397,16 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
 
     async def event_generator():
         try:
+            # Process attachments if present
+            full_content = request.content
+            if request.attachments:
+                for attachment in request.attachments:
+                    name = attachment.get("name", "Unknown File")
+                    content = attachment.get("content", "")
+                    full_content += f"\n\n---\n**Attached File:** {name}\n\n```\n{content}\n```\n---"
+
             # Add user message
-            storage.add_user_message(conversation_id, request.content)
+            storage.add_user_message(conversation_id, full_content)
             
             # Re-fetch conversation to get full history
             updated_conversation = storage.get_conversation(conversation_id)
