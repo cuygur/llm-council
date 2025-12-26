@@ -22,7 +22,7 @@ The Council doesn't just "ask" models; it manages a debate.
 2.  **⚖️ Stage 2: Anonymized Peer Review**
     Models receive the answers from Stage 1 (anonymized) and must grade, critique, and rank them from best to worst.
 3.  **🔄 Stage 2.5: The Rebuttal Round**
-    Models see the critiques leveled against their own work and are given one chance to "fix" their answer or concede to a better peer logic.
+    Models see the critiques leveled against their own work and are given one opportunity to "fix" their answer or concede to a better peer logic.
 4.  **🏛️ Stage 3: The Chairman's Decree**
     A designated **Chairman Model** reviews the entire transcript—the debates, the rankings, and the revised answers—to synthesize one definitive, objective final response.
 
@@ -45,6 +45,9 @@ Switch between strategic frameworks on the fly:
 
 ### 📊 Transparent Economy
 Real-time cost estimation and token tracking. Know exactly what a query will cost *before* you send it, and track actual usage across the entire deliberation chain.
+
+### 💾 Export & Share
+Instantly export your entire deliberation history to Markdown, JSON, or HTML for documentation or sharing with your team.
 
 ---
 
@@ -78,10 +81,23 @@ chmod +x start.sh
 
 ---
 
+## 🧪 Development & Testing
+
+The ecosystem is built for robustness. You can run the test suite to verify the backend logic:
+
+```bash
+# Run backend tests
+uv run python -m backend.tests.test_parsing
+```
+
+---
+
 ## 🛠️ Tech Stack
 
 *   **Backend:** Python 3.10+, FastAPI, AsyncIO, HTTPX.
+    *   *Modular Architecture:* Logic split into clear domains (`council`, `openrouter`, `pricing`, `schemas`).
 *   **Frontend:** React 18, Vite, React-Markdown, Vanilla CSS (Glassmorphism).
+    *   *Clean Components:* Logic extracted into custom hooks (`useConversation`) and pure components (`WelcomeScreen`).
 *   **Orchestration:** Advanced SSE (Server-Sent Events) for real-time streaming of model reasoning.
 *   **Intelligence:** 200+ models available via OpenRouter standard interface.
 
