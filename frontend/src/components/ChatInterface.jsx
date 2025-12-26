@@ -299,8 +299,6 @@ export default function ChatInterface({
             </span>
           </div>
         )}
-          </div>
-        )}
         
         {attachments.length > 0 && (
           <div className="attachments-preview">
