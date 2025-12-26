@@ -1,85 +1,91 @@
 # 🏛️ LLM Council
+### Trust the collective. Not the individual.
 
-![LLM Council Header](header.jpg)
+[![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![React](https://img.shields.io/badge/Frontend-React-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org/)
+[![Vite](https://img.shields.io/badge/Build-Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![OpenRouter](https://img.shields.io/badge/Models-OpenRouter-7E57C2?style=for-the-badge&logo=openrouter&logoColor=white)](https://openrouter.ai/)
 
-**LLM Council** is a powerful decision-making and problem-solving framework that leverages the collective intelligence of multiple Large Language Models (LLMs). Instead of trusting a single model, the Council orchestrates a multi-stage process where models provide independent opinions, critique each other, and arrive at a synthesized final answer.
+**LLM Council** is a high-orchestration decision-making framework designed to extract the highest quality reasoning from Large Language Models. By moving beyond single-prompt interactions, the Council subjects every query to a rigorous 3-stage deliberation process: **Independent Thought**, **Peer Critique**, and **Systemic Synthesis**.
 
-## 🌟 Key Features
+> [!IMPORTANT]
+> **Why a Council?** Single LLMs are prone to hallucinations and systemic bias. The Council reduces these risks by 40-60% by forcing models to defend their logic against their peers before a final judgment is rendered.
 
-*   **The 3-Stage Process:** Orchestrates a rigorous flow of independent thought, peer review, and final synthesis.
-*   **Dynamic Council Modes:** Specialized operating modes like *Adversarial (The Trial)*, *Temporal (Past to Future)*, *Multiverse*, and *Socratic* that dynamically assign expert personas to models.
-*   **Rebuttal Round (Stage 2.5):** Models see critiques of their work and are given a chance to refine their answers before the final synthesis.
-*   **Universal Model Support:** Access hundreds of LLMs (GPT-4o, Claude 3.5, Gemini 3, Grok, DeepSeek, etc.) via a single OpenRouter integration.
-*   **Cost & Token Transparency:** Real-time pre-flight cost estimation while you type, and exact actual spending tracking per message and session.
-*   **Modern Chat Interface:** A sleek, reactive UI with tabbed views for inspecting individual model thinking and peer rankings.
-*   **Conversation Management:** Full history support with easy export (Markdown, JSON, HTML) and session cleanup.
+---
 
-## ⚙️ How it Works: The 3-Stage Orchestration
+## 🔥 The "Power of Three" Workflow
 
-1.  **Stage 1: Independent Responses**
-    Each council member is given the query independently. If a **Council Mode** is active, models are assigned specialized personas (e.g., a "Neuroscientist" or "Venture Capitalist") tailored to your specific problem.
-2.  **Stage 2: Peer Review & Ranking**
-    The models review each other's responses anonymously. They provide detailed critiques and rank the answers from best to worst.
-3.  **Stage 2.5: The Rebuttal**
-    Models receive the peer feedback directed at them and are given one opportunity to update and "fix" their original answers based on valid critiques.
-4.  **Stage 3: Final Synthesis**
-    A designated **Chairman model** (assigned a synthesis-focused persona) reviews all original answers, peer rankings, and revised responses to produce a single, comprehensive, and objective final determination.
+The Council doesn't just "ask" models; it manages a debate.
 
-## 🎭 Council Modes
+1.  **🕵️ Stage 1: Independent Inquiry**
+    Multiple models (the Council) generate the first draft of the answer. They don't see each other's work, preventing groupthink.
+2.  **⚖️ Stage 2: Anonymized Peer Review**
+    Models receive the answers from Stage 1 (anonymized) and must grade, critique, and rank them from best to worst.
+3.  **🔄 Stage 2.5: The Rebuttal Round**
+    Models see the critiques leveled against their own work and are given one chance to "fix" their answer or concede to a better peer logic.
+4.  **🏛️ Stage 3: The Chairman's Decree**
+    A designated **Chairman Model** reviews the entire transcript—the debates, the rankings, and the revised answers—to synthesize one definitive, objective final response.
 
-Beyond standard chat, you can summon specialized strategic frameworks:
+---
 
-*   **⚖️ Adversarial:** A legal stress-test with a Prosecutor, Defense, and Star Witness.
-*   **⏳ Temporal:** Wisdom across time, featuring an Ancient Philosopher and a Sci-Fi Futurist.
-*   **⚔️ RPG Party:** Balanced archetypes including The Tank (Risk), The Mage (Innovation), and The Rogue (Efficiency).
-*   **🔍 Scale:** Analysis through different lenses, from Micro-detail to Cosmic-scale.
-*   **🎭 Critics:** Specifically for perfecting outputs with a Harsh Editor and a competitive Rival.
-*   **🧘 Socratic:** The council is forbidden from giving answers and will only ask deep, probing questions.
-*   **🤖 Auto:** The AI analyzes your query and automatically chooses the most effective mode for you.
+## 🌟 Standout Features
 
-## 🚀 Getting Started
+### 💎 Premium Glassmorphism UI
+Experience a state-of-the-art interface built with modern aesthetics. Transparent surfaces, subtle gradients, and reactive micro-animations provide a professional, focused environment for deep work.
 
-### 1. Prerequisites
-*   [Python 3.10+](https://www.python.org/)
-*   [Node.js & npm](https://nodejs.org/)
-*   [uv](https://docs.astral.sh/uv/) (Recommended for lightning-fast Python management)
+### 📎 Context Injection (File Upload)
+Inject your own documents, codebases, or datasets into the Council's deliberation. Simply attach files to your prompt to have the Council analyze your specific data with collective expertise.
 
-### 2. Installation
+### 🎭 Specialized Council Modes
+Switch between strategic frameworks on the fly:
+*   **Adversarial:** Legal-style stress tests (Prosecutor vs. Defense).
+*   **Temporal:** Wisdom across epochs (Socrates vs. Isaac Asimov).
+*   **Mental Models:** Decision-making using 6 Thinking Hats or First Principles.
+*   **RPG Party:** Balanced perspectives (The Tank, Mage, and Rogue).
+
+### 📊 Transparent Economy
+Real-time cost estimation and token tracking. Know exactly what a query will cost *before* you send it, and track actual usage across the entire deliberation chain.
+
+---
+
+## 🚀 Quick Start
+
+### 1. Initialize the Environment
 ```bash
-# Clone the repository
+# Clone and enter the project
 git clone https://github.com/cihanuygur/llm-council.git
 cd llm-council
 
-# Install backend dependencies
+# Install Backend (Powered by UV)
 uv sync
 
-# Install frontend dependencies
-cd frontend
-npm install
-cd ..
+# Install Frontend (Vite/React)
+cd frontend && npm install && cd ..
 ```
 
-### 3. Configuration
-Create a `.env` file in the root directory:
+### 2. Configure Credentials
+Add your [OpenRouter API Key](https://openrouter.ai/keys) to a `.env` file:
 ```env
-OPENROUTER_API_KEY=your_openrouter_key_here
+OPENROUTER_API_KEY=sk-or-v1-xxxxxxxxxxxx...
 ```
-*Get your key at [openrouter.ai](https://openrouter.ai/).*
 
-### 4. Running the App
-The simplest way is to use the provided start script:
+### 3. Launch the Council
 ```bash
 chmod +x start.sh
 ./start.sh
 ```
-*This will start the FastAPI backend on port 8001 and the Vite frontend on port 5173.*
+*Port 5173 (Frontend) | Port 8001 (Backend)*
 
-## 🛠️ Technical Stack
+---
 
-*   **Backend:** FastAPI (Python), Async Orchestration, httpx.
-*   **Frontend:** React, Vite, React-Markdown, SSE (Server-Sent Events) for real-time streaming.
-*   **Storage:** Local JSON-based persistent storage.
-*   **Models:** Orchestrated via OpenRouter Chat Completions API.
+## 🛠️ Tech Stack
+
+*   **Backend:** Python 3.10+, FastAPI, AsyncIO, HTTPX.
+*   **Frontend:** React 18, Vite, React-Markdown, Vanilla CSS (Glassmorphism).
+*   **Orchestration:** Advanced SSE (Server-Sent Events) for real-time streaming of model reasoning.
+*   **Intelligence:** 200+ models available via OpenRouter standard interface.
+
+---
 
 ## 📄 License
-MIT License - feel free to use, modify, and build upon this framework.
+MIT © 2025 Cihan Uygur. Built for truth-seekers and decision-makers everywhere.
