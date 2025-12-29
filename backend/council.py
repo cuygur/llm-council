@@ -83,26 +83,25 @@ async def check_clarification_needs(user_query: str) -> List[str]:
     Analyze the user query to see if it requires clarification.
     Returns a list of questions if ambiguous, or an empty list if clear.
     """
-    prompt = f"""You are a High-Precision Logic Auditor for the LLM Council.
-    The user's request will be processed by a multi-model deliberation chain.
+    prompt = f"""You are the Gatekeeper of the LLM Council.
+    We are about to run an expensive multi-stage simulation. 
+    If the user's prompt is lazy, vague, or missing critical parameters, YOU MUST INTERVENE.
     
-    Current Request: "{user_query}"
+    User Request: "{user_query}"
     
-    TASK: Determine if the request is "ACTIONABLE" or "AMBIGUOUS".
+    AUDIT RULES:
+    1. If the request is a single sentence or phrase that could be interpreted in multiple ways (e.g. "Write a script", "Help me with my project"), it is AMBIGUOUS.
+    2. If the request provides a clear goal AND specific details (e.g. "Write a Python script using FastAPI to handle user login"), it is CLEAR.
+    3. If you are even 10% unsure of what the user truly wants, it is AMBIGUOUS.
     
-    1. ACTIONABLE: The user has provided enough context, goal, or constraints to generate a high-quality technical or creative output. Examples: "Write a python script to parse CSV", "Describe the fall of Rome in 5 bullets".
-    2. AMBIGUOUS: The request is too broad, lacks specific goals, or is a "one-liner" with millions of possible interpretations. Examples: "Make a plan", "Write code", "Help me with my business", "Analyze the market".
+    ACTION:
+    - If AMBIGUOUS: Return a JSON list of 3-5 specific, hard-hitting questions that will force the user to define their requirements perfectly.
+    - If CLEAR: Return ONLY the word "CLEAR".
     
-    LOGIC:
-    - If AMBIGUOUS: Generate 3-5 sharp, probing questions to uncover the user's hidden requirements. Focus on Goal, Constraints, and Format.
-    - If ACTIONABLE: Return exactly the word "CLEAR".
+    Example for "Plan a trip":
+    ["What is your destination?", "What is your budget?", "How many days is the trip?", "What are your interests (adventure, food, culture)?"]
     
-    CRITICAL: The LLM Council is expensive and high-latency. Do NOT proceed if the query is a lazy one-liner. Force the user to be specific.
-    
-    Return ONLY a JSON list of strings (the questions) OR the string "CLEAR".
-    
-    Example output for "Make a program":
-    ["What should the program do?", "What programming language do you prefer?", "Who is the target user?"]
+    Response Format: ["Question 1", "Question 2"] OR "CLEAR"
     """
     
     messages = [{"role": "user", "content": prompt}]

@@ -182,6 +182,9 @@ export default function ChatInterface({
                     </div>
                   )}
 
+                  {/* Clarification Request */}
+                  {msg.clarification && <ClarificationRequest questions={msg.clarification} />}
+
                   {/* Stage 1 */}
                   {msg.loading?.stage1 && (
                     <div className="stage-loading">
@@ -218,9 +221,6 @@ export default function ChatInterface({
                     </div>
                   )}
                   {msg.stage3 && <Stage3 finalResponse={msg.stage3} />}
-                  
-                  {/* Clarification Request */}
-                  {msg.clarification && <ClarificationRequest questions={msg.clarification} />}
                 </div>
               )}
             </div>

@@ -316,11 +316,30 @@ async def send_message(conversation_id: str, request: SendMessageRequest):
     # Re-fetch conversation to get full history including the new user message
     updated_conversation = storage.get_conversation(conversation_id)
     
-    from .council import get_council_config
     council_models, chairman_model, model_personas = await get_council_config(
         updated_conversation, 
         request.content
     )
+
+    # Check for clarification needs
+    last_assistant_msg = next((m for m in reversed(updated_conversation["messages"][:-1]) if m['role'] == 'assistant'), None)
+    is_clarification_answer = last_assistant_msg and 'clarification' in last_assistant_msg
+    
+    if not is_clarification_answer:
+        questions = await check_clarification_needs(request.content)
+        if questions:
+            # Add assistant message with clarification only
+            storage.add_assistant_message(
+                conversation_id,
+                clarification=questions
+            )
+            return {
+                "clarification": questions,
+                "stage1": None,
+                "stage2": None,
+                "stage3": None,
+                "metadata": {}
+            }
     
     stage1_results, stage2_results, stage3_result, metadata = await run_full_council(
         updated_conversation["messages"],
@@ -393,7 +412,7 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
             last_assistant_msg = next((m for m in reversed(messages[:-1]) if m['role'] == 'assistant'), None)
             is_clarification_answer = last_assistant_msg and 'clarification' in last_assistant_msg
             
-            should_check_clarification = not is_clarification_answer and len(request.content) < 200 # Skip check for long detailed prompts
+            should_check_clarification = not is_clarification_answer and len(request.content) < 2000 # Increased limit significantly
 
             print(f"Should check clarification: {should_check_clarification} (is_clarification_answer={is_clarification_answer})")
 
