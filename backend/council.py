@@ -83,21 +83,26 @@ async def check_clarification_needs(user_query: str) -> List[str]:
     Analyze the user query to see if it requires clarification.
     Returns a list of questions if ambiguous, or an empty list if clear.
     """
-    prompt = f"""You are an AI assistant helping a user. 
-    Analyze the following request and determine if it is clear enough to proceed with a complex task, or if you need to ask clarifying questions first.
+    prompt = f"""You are a High-Precision Logic Auditor for the LLM Council.
+    The user's request will be processed by a multi-model deliberation chain.
     
-    Request: "{user_query}"
+    Current Request: "{user_query}"
     
-    Instructions:
-    1. If the request is vague (e.g., "Write a program", "Make me a plan", "Analyze this"), respond with 3-5 specific clarifying questions.
-    2. If the request is specific enough to start working (even if not perfect), respond with "CLEAR".
-    3. Be conservative: only ask questions if you genuinely cannot start without more info.
+    TASK: Determine if the request is "ACTIONABLE" or "AMBIGUOUS".
+    
+    1. ACTIONABLE: The user has provided enough context, goal, or constraints to generate a high-quality technical or creative output. Examples: "Write a python script to parse CSV", "Describe the fall of Rome in 5 bullets".
+    2. AMBIGUOUS: The request is too broad, lacks specific goals, or is a "one-liner" with millions of possible interpretations. Examples: "Make a plan", "Write code", "Help me with my business", "Analyze the market".
+    
+    LOGIC:
+    - If AMBIGUOUS: Generate 3-5 sharp, probing questions to uncover the user's hidden requirements. Focus on Goal, Constraints, and Format.
+    - If ACTIONABLE: Return exactly the word "CLEAR".
+    
+    CRITICAL: The LLM Council is expensive and high-latency. Do NOT proceed if the query is a lazy one-liner. Force the user to be specific.
     
     Return ONLY a JSON list of strings (the questions) OR the string "CLEAR".
     
-    Examples:
-    - Input: "Make a python script" -> Output: ["What should the script do?", "Do you have any specific libraries in mind?", "Is this for a specific operating system?"]
-    - Input: "Write a python script to calculate fibonacci" -> Output: "CLEAR"
+    Example output for "Make a program":
+    ["What should the program do?", "What programming language do you prefer?", "Who is the target user?"]
     """
     
     messages = [{"role": "user", "content": prompt}]
