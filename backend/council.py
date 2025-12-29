@@ -102,15 +102,20 @@ async def check_clarification_needs(user_query: str) -> List[str]:
     
     messages = [{"role": "user", "content": prompt}]
     
+    print(f"Checking clarification for: {user_query}")
+    
     # Use a fast model
     response = await query_model("google/gemini-3-flash-preview", messages, timeout=15.0)
     
     if not response or not response.get('content'):
+        print("No response from model for clarification check")
         return []
         
     content = response['content'].strip()
+    print(f"Clarification check raw response: {content}")
     
     if "CLEAR" in content and len(content) < 20: # simple heuristic
+        print("Request marked as CLEAR")
         return []
         
     try:
@@ -128,8 +133,12 @@ async def check_clarification_needs(user_query: str) -> List[str]:
              
         questions = json.loads(content)
         if isinstance(questions, list) and len(questions) > 0:
+            print(f"Clarification questions found: {questions}")
             return questions[:5] # limit to 5
-    except:
+        else:
+            print(f"Parsed JSON is not a non-empty list: {questions}")
+    except Exception as e:
+        print(f"Failed to parse clarification response as JSON: {e}")
         pass
         
     return []

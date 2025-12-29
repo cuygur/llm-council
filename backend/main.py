@@ -395,9 +395,12 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
             
             should_check_clarification = not is_clarification_answer and len(request.content) < 200 # Skip check for long detailed prompts
 
+            print(f"Should check clarification: {should_check_clarification} (is_clarification_answer={is_clarification_answer})")
+
             if should_check_clarification:
                 questions = await check_clarification_needs(request.content)
                 if questions:
+                    print(f"Sending clarification_needed event with {len(questions)} questions")
                     # Send clarification needed event
                     yield f"data: {json.dumps({'type': 'clarification_needed', 'data': {'questions': questions}})}\n\n"
                     
