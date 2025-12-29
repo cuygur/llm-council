@@ -78,6 +78,63 @@ async def stage1_collect_responses(
     return stage1_results
 
 
+async def check_clarification_needs(user_query: str) -> List[str]:
+    """
+    Analyze the user query to see if it requires clarification.
+    Returns a list of questions if ambiguous, or an empty list if clear.
+    """
+    prompt = f"""You are an AI assistant helping a user. 
+    Analyze the following request and determine if it is clear enough to proceed with a complex task, or if you need to ask clarifying questions first.
+    
+    Request: "{user_query}"
+    
+    Instructions:
+    1. If the request is vague (e.g., "Write a program", "Make me a plan", "Analyze this"), respond with 3-5 specific clarifying questions.
+    2. If the request is specific enough to start working (even if not perfect), respond with "CLEAR".
+    3. Be conservative: only ask questions if you genuinely cannot start without more info.
+    
+    Return ONLY a JSON list of strings (the questions) OR the string "CLEAR".
+    
+    Examples:
+    - Input: "Make a python script" -> Output: ["What should the script do?", "Do you have any specific libraries in mind?", "Is this for a specific operating system?"]
+    - Input: "Write a python script to calculate fibonacci" -> Output: "CLEAR"
+    """
+    
+    messages = [{"role": "user", "content": prompt}]
+    
+    # Use a fast model
+    response = await query_model("google/gemini-3-flash-preview", messages, timeout=15.0)
+    
+    if not response or not response.get('content'):
+        return []
+        
+    content = response['content'].strip()
+    
+    if "CLEAR" in content and len(content) < 20: # simple heuristic
+        return []
+        
+    try:
+        # Try to parse JSON list
+        import json
+        
+        # clean potentially markdown code blocks
+        if content.startswith("```"):
+             lines = content.split('\n')
+             if lines[0].startswith("```"):
+                 lines = lines[1:]
+             if lines[-1].strip() == "```":
+                 lines = lines[:-1]
+             content = '\n'.join(lines).strip()
+             
+        questions = json.loads(content)
+        if isinstance(questions, list) and len(questions) > 0:
+            return questions[:5] # limit to 5
+    except:
+        pass
+        
+    return []
+
+
 async def extract_ranking_with_llm(ranking_text: str, labels: List[str]) -> List[str]:
     """
     Use a fast LLM to extract the ranking if regex parsing fails.

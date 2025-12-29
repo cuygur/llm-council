@@ -12,7 +12,8 @@ import asyncio
 from . import storage
 from . import config
 from .openrouter import fetch_available_models
-from .council import run_full_council, generate_conversation_title, stage1_collect_responses, stage2_collect_rankings, stage2_5_rebuttal, stage3_synthesize_final, calculate_aggregate_rankings
+from .openrouter import fetch_available_models
+from .council import run_full_council, generate_conversation_title, stage1_collect_responses, stage2_collect_rankings, stage2_5_rebuttal, stage3_synthesize_final, calculate_aggregate_rankings, check_clarification_needs
 from .export import export_to_markdown, export_to_json, export_to_html
 from .pricing import estimate_query_cost, format_cost
 from .schemas import (
@@ -331,10 +332,10 @@ async def send_message(conversation_id: str, request: SendMessageRequest):
     # Add assistant message with all stages
     storage.add_assistant_message(
         conversation_id,
-        stage1_results,
-        stage2_results,
-        stage3_result,
-        metadata
+        stage1=stage1_results,
+        stage2=stage2_results,
+        stage3=stage3_result,
+        metadata=metadata
     )
 
     # Return the complete response with metadata
@@ -386,6 +387,29 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
                 updated_conversation, 
                 request.content
             )
+
+            # Check for clarification needs ONLY if this is not a response to a clarification
+            # Heuristic: If the last assistant message had 'clarification', we treat this user message as the answer
+            last_assistant_msg = next((m for m in reversed(messages[:-1]) if m['role'] == 'assistant'), None)
+            is_clarification_answer = last_assistant_msg and 'clarification' in last_assistant_msg
+            
+            should_check_clarification = not is_clarification_answer and len(request.content) < 200 # Skip check for long detailed prompts
+
+            if should_check_clarification:
+                questions = await check_clarification_needs(request.content)
+                if questions:
+                    # Send clarification needed event
+                    yield f"data: {json.dumps({'type': 'clarification_needed', 'data': {'questions': questions}})}\n\n"
+                    
+                    # Save clarification message
+                    storage.add_assistant_message(
+                        conversation_id,
+                        stage1=None, stage2=None, stage3=None, # Explicitly None
+                        clarification=questions
+                    )
+                    
+                    yield f"data: {json.dumps({'type': 'complete'})}\n\n"
+                    return
 
             # Start title generation in parallel (don't await yet)
             title_task = None
@@ -439,10 +463,10 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
 
             storage.add_assistant_message(
                 conversation_id,
-                stage1_results,
-                stage2_results,
-                stage3_result,
-                metadata
+                stage1=stage1_results,
+                stage2=stage2_results,
+                stage3=stage3_result,
+                metadata=metadata
             )
 
             # Send completion event

@@ -149,13 +149,14 @@ def add_user_message(conversation_id: str, content: str):
 
 def add_assistant_message(
     conversation_id: str,
-    stage1: List[Dict[str, Any]],
-    stage2: List[Dict[str, Any]],
-    stage3: Dict[str, Any],
-    metadata: Optional[Dict[str, Any]] = None
+    stage1: Optional[List[Dict[str, Any]]] = None,
+    stage2: Optional[List[Dict[str, Any]]] = None,
+    stage3: Optional[Dict[str, Any]] = None,
+    metadata: Optional[Dict[str, Any]] = None,
+    clarification: Optional[List[str]] = None
 ):
     """
-    Add an assistant message with all 3 stages to a conversation.
+    Add an assistant message with stages OR clarification to a conversation.
 
     Args:
         conversation_id: Conversation identifier
@@ -163,17 +164,23 @@ def add_assistant_message(
         stage2: List of model rankings
         stage3: Final synthesized response
         metadata: Optional metadata (rankings, mappings, etc.)
+        clarification: Optional list of clarifying questions
     """
     conversation = get_conversation(conversation_id)
     if conversation is None:
         raise ValueError(f"Conversation {conversation_id} not found")
 
     message = {
-        "role": "assistant",
-        "stage1": stage1,
-        "stage2": stage2,
-        "stage3": stage3
+        "role": "assistant"
     }
+    
+    if clarification:
+        message["clarification"] = clarification
+    else:
+        message["stage1"] = stage1
+        message["stage2"] = stage2
+        message["stage3"] = stage3
+
     
     if metadata:
         message["metadata"] = metadata

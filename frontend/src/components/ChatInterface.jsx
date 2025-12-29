@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import Stage1 from './Stage1';
 import Stage2 from './Stage2';
 import Stage3 from './Stage3';
+import ClarificationRequest from './ClarificationRequest';
 import WelcomeScreen from './WelcomeScreen';
 import { api } from '../api';
 import './ChatInterface.css';
@@ -217,6 +218,9 @@ export default function ChatInterface({
                     </div>
                   )}
                   {msg.stage3 && <Stage3 finalResponse={msg.stage3} />}
+                  
+                  {/* Clarification Request */}
+                  {msg.clarification && <ClarificationRequest questions={msg.clarification} />}
                 </div>
               )}
             </div>

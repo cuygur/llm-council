@@ -130,6 +130,13 @@ export function useConversation() {
           const updatedLastMsg = { ...lastMsg, loading: { ...lastMsg.loading } };
 
           switch (eventType) {
+            case 'clarification_needed':
+              updatedLastMsg.clarification = event.data.questions;
+              updatedLastMsg.loading.resolving = false;
+              updatedLastMsg.loading.stage1 = false;
+              updatedLastMsg.loading.stage2 = false;
+              updatedLastMsg.loading.stage3 = false;
+              break;
             case 'resolving_personas':
               updatedLastMsg.loading.resolving = true;
               break;
