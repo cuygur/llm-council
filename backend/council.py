@@ -796,8 +796,11 @@ async def get_council_config(
     from .config import COUNCIL_MODELS, CHAIRMAN_MODEL
     from . import storage
 
-    council_models = conversation.get("council_models", COUNCIL_MODELS)
-    chairman_model = conversation.get("chairman_model", CHAIRMAN_MODEL)
+    # Force use of global config to avoid "poisoned" conversations with invalid models
+    council_models = COUNCIL_MODELS
+    chairman_model = CHAIRMAN_MODEL
+    # council_models = conversation.get("council_models", COUNCIL_MODELS)
+    # chairman_model = conversation.get("chairman_model", CHAIRMAN_MODEL)
     model_personas = conversation.get("model_personas", {})
     mode = conversation.get("mode", "standard")
 
