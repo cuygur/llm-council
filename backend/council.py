@@ -688,80 +688,46 @@ async def resolve_council_mode(
         return {}
 
     all_models = list(set(council_models + [chairman_model]))
+    
+    # Use GPT-4o for persona resolution - it's reliable and follows instructions
+    resolution_model = "openai/gpt-4o"
 
-    # Prompt to determine personas
+    # Prompt to determine personas - be VERY explicit about using exact model names
     prompt = f"""You are the Coordinator of the LLM Council.
 The user has asked the following question: "{query}"
 
 We have a council of {len(council_models)} members and 1 Chairman. 
 Selected Mode: {mode}
 
-Task: Assign a specific role/persona to EACH of the models provided below to best address this query.
+Task: Assign a specific role/persona to EACH of the models listed below.
 
-Instructions for Specialist Mode:
-- Assign roles tailored to the problem's domain.
-- Examples: 
-  - Health: Neuroscientist, Bio-hacker, General Practitioner.
-  - Business: Fortune 500 CEO, Sun Tzu, Startup Founder.
-  - Life: Marcus Aurelius, Game Theorist, Stoic Philosopher.
+CRITICAL: You MUST use the EXACT model identifiers I provide. Do NOT invent or modify model names.
+The model identifiers are:
+{json.dumps(all_models)}
 
-Instructions for Mental Model Mode:
-- Assign roles based on decision-making mental models (e.g., 6 Thinking Hats).
-- Hats: White (Facts), Red (Feelings), Black (Cautions), Yellow (Benefits), Green (Creativity), Blue (Process).
-- Or other models like First Principles, Inversion, Second-Order Thinking.
+Return a JSON object where:
+- Keys are the EXACT model identifiers from the list above (copy them exactly)
+- Values are concise persona descriptions (1-2 sentences)
 
-Instructions for Adversarial Mode:
-- Create a legal stress-test environment.
-- Assign roles like: The Prosecutor (finds every flaw/risk), The Defense (argues for the idea's strongest parts), and The Star Witness (provides objective evidence).
-- The Chairman ({chairman_model}) must be The Judge.
+Example output format:
+{{
+  "{all_models[0]}": "The Strategist: Focuses on long-term planning and risk assessment.",
+  "{all_models[1] if len(all_models) > 1 else all_models[0]}": "The Devil's Advocate: Challenges assumptions and finds weaknesses."
+}}
 
-Instructions for Temporal Mode:
-- Assign roles from different time periods.
-- Personas: The Ancient Philosopher (timeless wisdom), The Modern Pragmatist (current tech/tools), and The Sci-Fi Futurist (50-year prediction).
-
-Instructions for Multiverse Mode:
-- Assign radically different life perspectives.
-- Personas: The Billionaire (unlimited resources), The Minimalist (zero-cost/simplification), and The Guerilla Artist (creative subversion).
-
-Instructions for RPG Party Mode:
-- Assign classic gaming archetypes.
-- Personas: The Tank (risk mitigation/defense), The Mage (complex innovation/magic), and The Rogue (efficiency/shortcuts/cheats).
-
-Instructions for Scale Mode:
-- Assign roles based on the size of the lens.
-- Personas: The Micro-Manager (tiny details/seconds), The Structural Architect (foundations/workflows), and The Cosmologist (the grand scheme of the universe).
-
-Instructions for Critics Mode:
-- Assign roles focused on perfecting an output.
-- Personas: The Harsh Editor (cuts fluff), The End-User (focuses on fun/utility), and The Rival (analyzes how to beat you).
-
-Instructions for Socratic Mode:
-- FORBIDDEN from giving answers.
-- Assign roles as different types of Inquisitors who only ask deep, probing questions to force the user to find their own answer.
-
-Instructions for Auto Mode:
-- Analyze the user's question to determine if it requires domain-specific expertise (Specialist Mode), strategic/structured analysis (Mental Model Mode), or any of the other specific modes above.
-- If the question is about a specific field (Health, Law, Engineering, History), use Specialist Mode.
-- If the question is about decision-making, problem-solving, or general strategy, use Mental Model Mode.
-- Once decided, follow the corresponding persona assignment instructions.
-
-IMPORTANT: The model designated as the Chairman ({chairman_model}) should be assigned a role focused on synthesis, unbiased judgment, and final decision-making tailored to the domain.
-
-Return ONLY a JSON object where keys are the EXACT model identifiers provided below and values are the concise persona descriptions.
-
-Model Identifiers:
-{", ".join(all_models)}
+For mode "{mode}", assign appropriate personas based on the question domain.
 
 JSON Output:"""
 
     messages = [{"role": "user", "content": prompt}]
     
     print(f"Resolving personas for mode: {mode}")
-    # Use a fast model for this
-    response = await query_model("google/gemini-3-flash-preview", messages, timeout=20.0)
+    print(f"Using models: {all_models}")
+    
+    response = await query_model(resolution_model, messages, timeout=30.0)
     
     if not response or not response.get('content'):
-        print("Failed to get response for persona resolution")
+        print("Failed to get response for persona resolution, using empty personas")
         return {}
         
     try:
@@ -779,8 +745,23 @@ JSON Output:"""
         
         personas = json.loads(content)
         print(f"Parsed personas: {personas}")
-        # Ensure only provided models are in the dict
-        return {m: p for m, p in personas.items() if m in all_models}
+        
+        # Filter to only include models we actually have
+        filtered_personas = {m: p for m, p in personas.items() if m in all_models}
+        
+        # If the AI hallucinated model names and we got nothing, create default personas
+        if len(filtered_personas) == 0 and len(personas) > 0:
+            print(f"Warning: AI returned wrong model names. Creating default personas.")
+            # Assign the persona values to our actual models in order
+            persona_values = list(personas.values())
+            for i, model in enumerate(all_models):
+                if i < len(persona_values):
+                    filtered_personas[model] = persona_values[i]
+                else:
+                    filtered_personas[model] = f"Council Member {i+1}"
+        
+        print(f"Final personas: {filtered_personas}")
+        return filtered_personas
     except Exception as e:
         print(f"Error parsing personas: {e}")
         return {}
