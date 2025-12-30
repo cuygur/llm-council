@@ -85,7 +85,7 @@ async def query_model(
         "messages": messages,
     }
 
-    retries = 3
+    retries = 2
     base_delay = 1.0
 
     for attempt in range(retries + 1):
