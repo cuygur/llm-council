@@ -83,6 +83,7 @@ async def check_clarification_needs(user_query: str) -> List[str]:
     Analyze the user query to see if it requires clarification.
     Returns a list of questions if ambiguous, or an empty list if clear.
     """
+    
     prompt = f"""You are the Gatekeeper of the LLM Council.
     We are about to run an expensive multi-stage simulation. 
     If the user's prompt is lazy, vague, or missing critical parameters, YOU MUST INTERVENE.
@@ -106,20 +107,15 @@ async def check_clarification_needs(user_query: str) -> List[str]:
     
     messages = [{"role": "user", "content": prompt}]
     
-    print(f"Checking clarification for: {user_query}")
-    
-    # Use a fast model
+    # Use fast preview model as requested
     response = await query_model("google/gemini-3-flash-preview", messages, timeout=15.0)
     
     if not response or not response.get('content'):
-        print("No response from model for clarification check")
         return []
         
     content = response['content'].strip()
-    print(f"Clarification check raw response: {content}")
     
     if "CLEAR" in content and len(content) < 20: # simple heuristic
-        print("Request marked as CLEAR")
         return []
         
     try:
@@ -137,12 +133,8 @@ async def check_clarification_needs(user_query: str) -> List[str]:
              
         questions = json.loads(content)
         if isinstance(questions, list) and len(questions) > 0:
-            print(f"Clarification questions found: {questions}")
             return questions[:5] # limit to 5
-        else:
-            print(f"Parsed JSON is not a non-empty list: {questions}")
     except Exception as e:
-        print(f"Failed to parse clarification response as JSON: {e}")
         pass
         
     return []

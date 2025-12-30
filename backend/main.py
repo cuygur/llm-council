@@ -414,8 +414,6 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
             
             should_check_clarification = not is_clarification_answer and len(request.content) < 2000 # Increased limit significantly
 
-            print(f"Should check clarification: {should_check_clarification} (is_clarification_answer={is_clarification_answer})")
-
             if should_check_clarification:
                 questions = await check_clarification_needs(request.content)
                 if questions:
