@@ -309,9 +309,12 @@ The "ranking" list must contain the response labels in order from best to worst.
 Now provide your evaluation and ranking:"""
 
     import asyncio
+    # Create tasks for Stage 2
     tasks = []
     
+    print(f"Starting Stage 2 for {len(council_models)} models...")
     for model in council_models:
+        print(f"Creating ranking task for model: {model}")
         messages = [{"role": "user", "content": ranking_prompt}]
         # Inject persona if available
         if model_personas and model in model_personas:
@@ -319,7 +322,9 @@ Now provide your evaluation and ranking:"""
         tasks.append(query_model(model, messages))
 
     # Get rankings from all council models in parallel
+    print("Waiting for all ranking tasks to complete...")
     responses_list = await asyncio.gather(*tasks)
+    print("All ranking tasks completed.")
     responses = {model: response for model, response in zip(council_models, responses_list)}
 
     # Format results

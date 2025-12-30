@@ -67,6 +67,8 @@ async def query_model(
     Returns:
         Response dict with 'content' and optional 'reasoning_details', or None if failed
     """
+    import asyncio
+
     # Use model-specific timeout if not provided
     if timeout is None:
         timeout = get_model_timeout(model)
@@ -74,6 +76,8 @@ async def query_model(
     headers = {
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
         "Content-Type": "application/json",
+        "HTTP-Referer": "https://github.com/cihanuygur/llm-council", # Recommended by OpenRouter
+        "X-Title": "LLM Council", # Recommended by OpenRouter
     }
 
     payload = {
@@ -81,63 +85,132 @@ async def query_model(
         "messages": messages,
     }
 
-    try:
-        async with httpx.AsyncClient(timeout=timeout) as client:
-            response = await client.post(
-                OPENROUTER_API_URL,
-                headers=headers,
-                json=payload
-            )
-            response.raise_for_status()
+    retries = 3
+    base_delay = 1.0
 
-            data = response.json()
-            message = data['choices'][0]['message']
+    for attempt in range(retries + 1):
+        try:
+            async with httpx.AsyncClient(timeout=timeout) as client:
+                response = await client.post(
+                    OPENROUTER_API_URL,
+                    headers=headers,
+                    json=payload
+                )
+                
+                # Check directly to handle 429 specifically
+                if response.status_code == 429:
+                    if attempt < retries:
+                        wait_time = base_delay * (2 ** attempt)
+                        print(f"Rate limit (429) hit for {model}. Retrying in {wait_time}s...")
+                        await asyncio.sleep(wait_time)
+                        continue
+                    else:
+                        response.raise_for_status()
 
-            # Extract token usage
-            usage = data.get('usage', {})
+                response.raise_for_status()
 
-            # Get content
-            content = message.get('content', '')
+                data = response.json()
+                
+                # Check for API-level errors that might return 200 OK but contain error field
+                if 'error' in data:
+                    # OpenRouter sometimes returns error in body even with 200 OK? 
+                    # Usually standard HTTP codes, but good to be safe.
+                    # If it's a rate limit error in body:
+                    error_msg = str(data['error'])
+                    if '429' in error_msg or 'rate limit' in error_msg.lower():
+                         if attempt < retries:
+                            wait_time = base_delay * (2 ** attempt)
+                            print(f"API Error (Rate Limit) for {model}. Retrying in {wait_time}s...")
+                            await asyncio.sleep(wait_time)
+                            continue
+                    
+                    return {
+                        'error': error_msg,
+                        'content': f"Error: {error_msg}",
+                        'thinking': "",
+                        'is_reasoning_model': is_reasoning_model(model),
+                        'usage': {}
+                    }
 
-            # Parse reasoning if it's a reasoning model
-            thinking = ""
-            answer = content
+                if 'choices' not in data or not data['choices']:
+                     return {
+                        'error': "No choices returned",
+                        'content': "Error: Empty response from provider",
+                        'thinking': "",
+                        'is_reasoning_model': is_reasoning_model(model),
+                        'usage': {}
+                    }
 
-            if is_reasoning_model(model):
-                parsed = parse_reasoning_response(content)
-                thinking = parsed['thinking']
-                answer = parsed['answer']
+                message = data['choices'][0]['message']
+
+                # Extract token usage
+                usage = data.get('usage', {})
+
+                # Get content
+                content = message.get('content', '')
+
+                # Parse reasoning if it's a reasoning model
+                thinking = ""
+                answer = content
+
+                if is_reasoning_model(model):
+                    parsed = parse_reasoning_response(content)
+                    thinking = parsed['thinking']
+                    answer = parsed['answer']
+
+                return {
+                    'content': answer,  # Final answer without thinking tags
+                    'thinking': thinking,  # Extracted thinking process
+                    'reasoning_details': message.get('reasoning_details'),
+                    'is_reasoning_model': is_reasoning_model(model),
+                    'usage': {
+                        'prompt_tokens': usage.get('prompt_tokens', 0),
+                        'completion_tokens': usage.get('completion_tokens', 0),
+                        'total_tokens': usage.get('total_tokens', 0)
+                    }
+                }
+
+        except httpx.HTTPStatusError as e:
+            # This catches raise_for_status()
+            print(f"HTTP error querying model {model}: {e}")
+            if attempt < retries and e.response.status_code == 429:
+                 # Should have been handled above, but just in case
+                 wait_time = base_delay * (2 ** attempt)
+                 await asyncio.sleep(wait_time)
+                 continue
+                 
+            return {
+                'error': f"HTTP Error: {str(e)}",
+                'content': f"Error: {str(e)}",
+                'thinking': "",
+                'is_reasoning_model': is_reasoning_model(model),
+                'usage': {}
+            }
+        except httpx.HTTPError as e:
+            # Network errors etc.
+            print(f"Network error querying model {model}: {e}")
+            if attempt < retries:
+                 wait_time = base_delay * (2 ** attempt)
+                 print(f"Network error. Retrying in {wait_time}s...")
+                 await asyncio.sleep(wait_time)
+                 continue
 
             return {
-                'content': answer,  # Final answer without thinking tags
-                'thinking': thinking,  # Extracted thinking process
-                'reasoning_details': message.get('reasoning_details'),
+                'error': f"Network Error: {str(e)}",
+                'content': f"Error: {str(e)}",
+                'thinking': "",
                 'is_reasoning_model': is_reasoning_model(model),
-                'usage': {
-                    'prompt_tokens': usage.get('prompt_tokens', 0),
-                    'completion_tokens': usage.get('completion_tokens', 0),
-                    'total_tokens': usage.get('total_tokens', 0)
-                }
+                'usage': {}
             }
-
-    except httpx.HTTPError as e:
-        print(f"HTTP error querying model {model}: {e}")
-        return {
-            'error': f"HTTP Error: {str(e)}",
-            'content': f"Error: {str(e)}",
-            'thinking': "",
-            'is_reasoning_model': is_reasoning_model(model),
-            'usage': {}
-        }
-    except Exception as e:
-        print(f"Unexpected error querying model {model}: {e}")
-        return {
-            'error': str(e),
-            'content': f"Error: {str(e)}",
-            'thinking': "",
-            'is_reasoning_model': is_reasoning_model(model),
-            'usage': {}
-        }
+        except Exception as e:
+            print(f"Unexpected error querying model {model}: {e}")
+            return {
+                'error': str(e),
+                'content': f"Error: {str(e)}",
+                'thinking': "",
+                'is_reasoning_model': is_reasoning_model(model),
+                'usage': {}
+            }
 
 
 async def query_models_parallel(

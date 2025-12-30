@@ -17,7 +17,7 @@ REASONING_MODELS = {
 
 # Extended timeout for reasoning models (in seconds)
 REASONING_TIMEOUT = 300.0  # 5 minutes
-STANDARD_TIMEOUT = 120.0   # 2 minutes
+STANDARD_TIMEOUT = 60.0    # 1 minute
 
 
 def is_reasoning_model(model_id: str) -> bool:
