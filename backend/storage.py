@@ -112,14 +112,21 @@ def list_conversations() -> List[Dict[str, Any]]:
         if filename.endswith('.json'):
             path = os.path.join(DATA_DIR, filename)
             with open(path, 'r') as f:
-                data = json.load(f)
-                # Return metadata only
-                conversations.append({
-                    "id": data["id"],
-                    "created_at": data["created_at"],
-                    "title": data.get("title", "New Conversation"),
-                    "message_count": len(data["messages"])
-                })
+                try:
+                    data = json.load(f)
+                    # Return metadata only
+                    conversations.append({
+                        "id": data["id"],
+                        "created_at": data["created_at"],
+                        "title": data.get("title", "New Conversation"),
+                        "message_count": len(data["messages"])
+                    })
+                except json.JSONDecodeError:
+                    print(f"Error loading conversation {filename}: Invalid JSON")
+                    continue
+                except Exception as e:
+                    print(f"Error loading conversation {filename}: {e}")
+                    continue
 
     # Sort by creation time, newest first
     conversations.sort(key=lambda x: x["created_at"], reverse=True)
