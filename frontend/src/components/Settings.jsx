@@ -458,6 +458,110 @@ export default function Settings({
                     <div className="mode-desc">Forbidden from answering; only questions.</div>
                   </div>
                 </label>
+                <label className={`mode-option ${mode === 'boardroom' ? 'active' : ''}`}>
+                  <input
+                    type="radio"
+                    name="mode"
+                    value="boardroom"
+                    checked={mode === 'boardroom'}
+                    onChange={(e) => setMode(e.target.value)}
+                  />
+                  <div className="mode-info">
+                    <div className="mode-name">Boardroom</div>
+                    <div className="mode-desc">CXO roles: CEO, CFO, CTO, CMO.</div>
+                  </div>
+                </label>
+                <label className={`mode-option ${mode === 'philosophers' ? 'active' : ''}`}>
+                  <input
+                    type="radio"
+                    name="mode"
+                    value="philosophers"
+                    checked={mode === 'philosophers'}
+                    onChange={(e) => setMode(e.target.value)}
+                  />
+                  <div className="mode-info">
+                    <div className="mode-name">Philosophers</div>
+                    <div className="mode-desc">Stoic, Nihilist, Utilitarian lenses.</div>
+                  </div>
+                </label>
+                <label className={`mode-option ${mode === 'design_team' ? 'active' : ''}`}>
+                  <input
+                    type="radio"
+                    name="mode"
+                    value="design_team"
+                    checked={mode === 'design_team'}
+                    onChange={(e) => setMode(e.target.value)}
+                  />
+                  <div className="mode-info">
+                    <div className="mode-name">Design Team</div>
+                    <div className="mode-desc">User Advocate, Visual, Engineer.</div>
+                  </div>
+                </label>
+                <label className={`mode-option ${mode === 'red_team' ? 'active' : ''}`}>
+                  <input
+                    type="radio"
+                    name="mode"
+                    value="red_team"
+                    checked={mode === 'red_team'}
+                    onChange={(e) => setMode(e.target.value)}
+                  />
+                  <div className="mode-info">
+                    <div className="mode-name">Red Team</div>
+                    <div className="mode-desc">Aggressive security & vulnerability finding.</div>
+                  </div>
+                </label>
+                <label className={`mode-option ${mode === 'writers_room' ? 'active' : ''}`}>
+                  <input
+                    type="radio"
+                    name="mode"
+                    value="writers_room"
+                    checked={mode === 'writers_room'}
+                    onChange={(e) => setMode(e.target.value)}
+                  />
+                  <div className="mode-info">
+                    <div className="mode-name">Writer's Room</div>
+                    <div className="mode-desc">Plotter, Pantser, Editor, Character.</div>
+                  </div>
+                </label>
+                <label className={`mode-option ${mode === 'archetypes' ? 'active' : ''}`}>
+                  <input
+                    type="radio"
+                    name="mode"
+                    value="archetypes"
+                    checked={mode === 'archetypes'}
+                    onChange={(e) => setMode(e.target.value)}
+                  />
+                  <div className="mode-info">
+                    <div className="mode-name">Archetypes</div>
+                    <div className="mode-desc">Jungian: Hero, Sage, Jester.</div>
+                  </div>
+                </label>
+                <label className={`mode-option ${mode === 'elemental' ? 'active' : ''}`}>
+                  <input
+                    type="radio"
+                    name="mode"
+                    value="elemental"
+                    checked={mode === 'elemental'}
+                    onChange={(e) => setMode(e.target.value)}
+                  />
+                  <div className="mode-info">
+                    <div className="mode-name">Elemental</div>
+                    <div className="mode-desc">Earth (Grounding), Air (Intellect), Fire (Passion).</div>
+                  </div>
+                </label>
+                <label className={`mode-option ${mode === 'future_studies' ? 'active' : ''}`}>
+                  <input
+                    type="radio"
+                    name="mode"
+                    value="future_studies"
+                    checked={mode === 'future_studies'}
+                    onChange={(e) => setMode(e.target.value)}
+                  />
+                  <div className="mode-info">
+                    <div className="mode-name">Future Studies</div>
+                    <div className="mode-desc">Utopian, Dystopian, Primitivist.</div>
+                  </div>
+                </label>
               </div>
             </section>
 

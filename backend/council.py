@@ -708,8 +708,8 @@ async def resolve_council_mode(
 
     all_models = list(set(council_models + [chairman_model]))
     
-    # Use GPT-4o for persona resolution - it's reliable and follows instructions
-    resolution_model = "openai/gpt-4o"
+    # Use GPT-5.2 for persona resolution - it's reliable and follows instructions
+    resolution_model = "openai/gpt-5.2"
 
     # Prompt to determine personas - be VERY explicit about using exact model names
     prompt = f"""You are the Coordinator of the LLM Council.
