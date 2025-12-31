@@ -13,7 +13,7 @@ MODEL_PRICING = {
         "prompt": 3.00,
         "completion": 15.00,
     },
-    "anthropic/claude-3-opus": {
+    "anthropic/claude-opus-4.5": {
         "prompt": 15.00,
         "completion": 75.00,
     },

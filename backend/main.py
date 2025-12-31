@@ -277,8 +277,8 @@ async def get_available_models():
             "description": "Balanced performance and speed"
         },
         {
-            "id": "anthropic/claude-3-opus",
-            "name": "Claude 3 Opus",
+            "id": "anthropic/claude-opus-4.5",
+            "name": "Claude Opus 4.5",
             "provider": "Anthropic",
             "description": "Most capable Claude model"
         },

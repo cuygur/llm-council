@@ -34,7 +34,7 @@ export default function Settings({
   }, [isOpen]);
 
   // Current version of default presets - increment when adding new defaults
-  const PRESETS_VERSION = 5;
+  const PRESETS_VERSION = 6;
 
   const getDefaultPresets = () => [
     {
@@ -51,13 +51,13 @@ export default function Settings({
     },
     {
       name: 'Premium Council',
-      councilModels: ['openai/gpt-5.2', 'anthropic/claude-3-opus', 'google/gemini-3-pro-preview', 'x-ai/grok-4'],
-      chairmanModel: 'anthropic/claude-3-opus',
+      councilModels: ['openai/gpt-5.2', 'anthropic/claude-opus-4.5', 'google/gemini-3-pro-preview', 'x-ai/grok-4'],
+      chairmanModel: 'anthropic/claude-opus-4.5',
       isDefault: true
     },
     {
       name: 'Reasoning Masters',
-      councilModels: ['deepseek/deepseek-r1', 'openai/gpt-5.2', 'anthropic/claude-3-opus'],
+      councilModels: ['deepseek/deepseek-r1', 'openai/gpt-5.2', 'anthropic/claude-opus-4.5'],
       chairmanModel: 'deepseek/deepseek-r1',
       isDefault: true
     },
@@ -87,8 +87,8 @@ export default function Settings({
     },
     {
       name: 'Creative Writers',
-      councilModels: ['anthropic/claude-3-opus', 'openai/gpt-5.2', 'google/gemini-3-pro-preview', 'x-ai/grok-4'],
-      chairmanModel: 'anthropic/claude-3-opus',
+      councilModels: ['anthropic/claude-opus-4.5', 'openai/gpt-5.2', 'google/gemini-3-pro-preview', 'x-ai/grok-4'],
+      chairmanModel: 'anthropic/claude-opus-4.5',
       isDefault: true
     },
     {
