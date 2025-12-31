@@ -1,6 +1,8 @@
 """3-stage LLM Council orchestration."""
 
+import asyncio
 import json
+import re
 from typing import List, Dict, Any, Tuple
 from .openrouter import query_models_parallel, query_model
 from .config import COUNCIL_MODELS, CHAIRMAN_MODEL
@@ -23,8 +25,6 @@ async def stage1_collect_responses(
     Returns:
         List of dicts with 'model' and 'response' keys
     """
-    import asyncio
-    
     # Create tasks for each model
     tasks = []
     
@@ -120,8 +120,6 @@ async def check_clarification_needs(user_query: str) -> List[str]:
         
     try:
         # Try to parse JSON list
-        import json
-        
         # clean potentially markdown code blocks
         if content.startswith("```"):
              lines = content.split('\n')
@@ -135,7 +133,7 @@ async def check_clarification_needs(user_query: str) -> List[str]:
         if isinstance(questions, list) and len(questions) > 0:
             return questions[:5] # limit to 5
     except Exception as e:
-        pass
+        print(f"Error parsing clarification questions: {e}")
         
     return []
 
@@ -170,7 +168,6 @@ Final Ranking:"""
         
     content = response.get('content', '').strip()
     
-    import re
     # Extract labels from the response
     found_labels = []
     for label in labels:
@@ -193,9 +190,6 @@ def parse_ranking_from_text(ranking_text: str) -> List[str]:
     Returns:
         List of response labels in ranked order
     """
-    import re
-    import json
-
     # Method 1: Try to find and parse a JSON block
     # Look for ```json ... ``` or just { ... } at the end
     json_match = re.search(r'```json\s*(\{.*?\})\s*```', ranking_text, re.DOTALL)
@@ -308,7 +302,6 @@ The "ranking" list must contain the response labels in order from best to worst.
 
 Now provide your evaluation and ranking:"""
 
-    import asyncio
     # Create tasks for Stage 2
     tasks = []
     
@@ -409,7 +402,6 @@ async def stage2_5_rebuttal(
                 )
 
     # Prepare rebuttal tasks
-    import asyncio
     tasks = []
     participating_models = []
 

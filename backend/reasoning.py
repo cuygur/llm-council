@@ -1,7 +1,7 @@
 """Utilities for handling reasoning models (o1, o3, DeepSeek-R1, etc.)."""
 
 import re
-from typing import Dict, Tuple, Optional
+from typing import Any, Dict, Tuple, Optional
 
 # Models that use extended reasoning with <think> tags or similar
 REASONING_MODELS = {
@@ -170,7 +170,7 @@ def format_thinking_for_display(thinking: str) -> str:
     return thinking.strip()
 
 
-def get_reasoning_model_config(model_id: str) -> Dict[str, any]:
+def get_reasoning_model_config(model_id: str) -> Dict[str, Any]:
     """
     Get special configuration for reasoning models.
 
