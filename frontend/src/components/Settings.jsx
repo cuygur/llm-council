@@ -34,67 +34,67 @@ export default function Settings({
   }, [isOpen]);
 
   // Current version of default presets - increment when adding new defaults
-  const PRESETS_VERSION = 2;
+  const PRESETS_VERSION = 3;
 
   const getDefaultPresets = () => [
     {
       name: 'The Big Three',
-      councilModels: ['openai/gpt-4o', 'anthropic/claude-3.5-sonnet', 'google/gemini-2.0-flash-001'],
-      chairmanModel: 'google/gemini-2.0-flash-001',
+      councilModels: ['openai/gpt-5.2', 'anthropic/claude-sonnet-4.5', 'google/gemini-3-pro-preview'],
+      chairmanModel: 'google/gemini-3-pro-preview',
       isDefault: true
     },
     {
       name: 'Fast & Cheap',
-      councilModels: ['openai/gpt-4o-mini', 'anthropic/claude-3-haiku', 'google/gemini-2.0-flash-lite-001'],
-      chairmanModel: 'google/gemini-2.0-flash-lite-001',
+      councilModels: ['x-ai/grok-4.1-fast', 'google/gemini-3-flash-preview', 'nex-agi/deepseek-v3.1-nex-n1:free'],
+      chairmanModel: 'google/gemini-3-flash-preview',
       isDefault: true
     },
     {
       name: 'Premium Council',
-      councilModels: ['openai/o1', 'anthropic/claude-3.5-sonnet', 'google/gemini-2.5-pro-preview-06-05', 'x-ai/grok-3-beta'],
-      chairmanModel: 'anthropic/claude-3.5-sonnet',
+      councilModels: ['openai/gpt-5.2', 'anthropic/claude-opus-4.5', 'google/gemini-3-pro-preview', 'x-ai/grok-4'],
+      chairmanModel: 'anthropic/claude-opus-4.5',
       isDefault: true
     },
     {
       name: 'Reasoning Masters',
-      councilModels: ['openai/o1', 'deepseek/deepseek-r1', 'google/gemini-2.5-flash-preview-05-20'],
-      chairmanModel: 'openai/o1',
+      councilModels: ['deepseek/deepseek-r1', 'openai/gpt-5.2', 'anthropic/claude-opus-4.5'],
+      chairmanModel: 'deepseek/deepseek-r1',
       isDefault: true
     },
     {
       name: 'Open Source Alliance',
-      councilModels: ['deepseek/deepseek-chat', 'meta-llama/llama-3.3-70b-instruct', 'qwen/qwen-2.5-72b-instruct'],
-      chairmanModel: 'deepseek/deepseek-chat',
+      councilModels: ['deepseek/deepseek-r1', 'nex-agi/deepseek-v3.1-nex-n1:free', 'meta-llama/llama-3.3-70b-instruct', 'qwen/qwen-2.5-72b-instruct'],
+      chairmanModel: 'nex-agi/deepseek-v3.1-nex-n1:free',
       isDefault: true
     },
     {
       name: 'Balanced Mix',
-      councilModels: ['openai/gpt-4o', 'anthropic/claude-3.5-sonnet', 'deepseek/deepseek-chat', 'google/gemini-2.0-flash-001', 'x-ai/grok-3-mini-beta'],
-      chairmanModel: 'anthropic/claude-3.5-sonnet',
+      councilModels: ['openai/gpt-5.2', 'anthropic/claude-sonnet-4.5', 'deepseek/deepseek-r1', 'google/gemini-3-flash-preview', 'x-ai/grok-4'],
+      chairmanModel: 'anthropic/claude-sonnet-4.5',
       isDefault: true
     },
     {
       name: 'Speed Demon',
-      councilModels: ['openai/gpt-4o-mini', 'anthropic/claude-3-haiku', 'google/gemini-2.0-flash-lite-001', 'x-ai/grok-3-mini-beta'],
-      chairmanModel: 'google/gemini-2.0-flash-lite-001',
+      councilModels: ['x-ai/grok-4.1-fast', 'google/gemini-3-flash-preview', 'nex-agi/deepseek-v3.1-nex-n1:free'],
+      chairmanModel: 'x-ai/grok-4.1-fast',
       isDefault: true
     },
     {
       name: 'Code Council',
-      councilModels: ['anthropic/claude-3.5-sonnet', 'deepseek/deepseek-chat', 'openai/gpt-4o', 'google/gemini-2.5-pro-preview-06-05'],
-      chairmanModel: 'anthropic/claude-3.5-sonnet',
+      councilModels: ['anthropic/claude-sonnet-4.5', 'deepseek/deepseek-r1', 'openai/gpt-5.2', 'google/gemini-3-pro-preview'],
+      chairmanModel: 'anthropic/claude-sonnet-4.5',
       isDefault: true
     },
     {
       name: 'Creative Writers',
-      councilModels: ['anthropic/claude-3.5-sonnet', 'openai/gpt-4o', 'google/gemini-2.0-flash-001', 'x-ai/grok-3-beta'],
-      chairmanModel: 'anthropic/claude-3.5-sonnet',
+      councilModels: ['anthropic/claude-opus-4.5', 'openai/gpt-5.2', 'google/gemini-3-pro-preview', 'x-ai/grok-4'],
+      chairmanModel: 'anthropic/claude-opus-4.5',
       isDefault: true
     },
     {
       name: 'Budget Friendly',
-      councilModels: ['deepseek/deepseek-chat', 'google/gemini-2.0-flash-lite-001', 'openai/gpt-4o-mini'],
-      chairmanModel: 'deepseek/deepseek-chat',
+      councilModels: ['nex-agi/deepseek-v3.1-nex-n1:free', 'google/gemini-3-flash-preview', 'x-ai/grok-4.1-fast'],
+      chairmanModel: 'nex-agi/deepseek-v3.1-nex-n1:free',
       isDefault: true
     }
   ];
