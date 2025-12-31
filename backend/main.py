@@ -1,21 +1,134 @@
 """FastAPI backend for LLM Council."""
 
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
-from fastapi.responses import StreamingResponse, JSONResponse
-from typing import List, Dict, Any, Optional
+import logging
+import re
 import uuid
 import json
 import asyncio
+from typing import List, Dict, Any, Optional
+
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse, JSONResponse
 
 from . import storage
 from . import config
 from .openrouter import fetch_available_models
-from .openrouter import fetch_available_models
-from .council import run_full_council, generate_conversation_title, stage1_collect_responses, stage2_collect_rankings, stage2_5_rebuttal, stage3_synthesize_final, calculate_aggregate_rankings, check_clarification_needs, get_council_config
+from .council import (
+    run_full_council, 
+    generate_conversation_title, 
+    stage1_collect_responses, 
+    stage2_collect_rankings, 
+    stage2_5_rebuttal, 
+    stage3_synthesize_final, 
+    calculate_aggregate_rankings, 
+    check_clarification_needs, 
+    get_council_config
+)
 from .export import export_to_markdown, export_to_json, export_to_html
 from .pricing import estimate_query_cost, format_cost
+
+# Configure logging
+logger = logging.getLogger(__name__)
+
+
+# ============================================================================
+# Helper Functions
+# ============================================================================
+
+def sanitize_attachment_name(name: str, max_length: int = 100) -> str:
+    """
+    Sanitize attachment filename to prevent injection attacks.
+    
+    Args:
+        name: Original filename
+        max_length: Maximum allowed length
+        
+    Returns:
+        Sanitized filename
+    """
+    # Remove any markdown formatting characters that could break formatting
+    sanitized = re.sub(r'[`*_\[\]()#]', '', name)
+    # Remove newlines and control characters
+    sanitized = re.sub(r'[\n\r\x00-\x1f]', '', sanitized)
+    # Truncate to max length
+    return sanitized[:max_length] if len(sanitized) > max_length else sanitized
+
+
+def sanitize_attachment_content(content: str, max_length: int = 100000) -> str:
+    """
+    Sanitize attachment content to prevent injection attacks.
+    
+    Args:
+        content: Original file content
+        max_length: Maximum allowed length (default 100KB)
+        
+    Returns:
+        Sanitized content
+    """
+    # Escape backticks to prevent breaking out of code blocks
+    sanitized = content.replace('```', '\\`\\`\\`')
+    # Truncate to prevent memory issues
+    if len(sanitized) > max_length:
+        sanitized = sanitized[:max_length] + "\n[Content truncated due to size limit]"
+    return sanitized
+
+
+def process_attachments(content: str, attachments: Optional[List[Dict[str, str]]]) -> str:
+    """
+    Process and append attachment content to the message.
+    
+    Args:
+        content: Original message content
+        attachments: List of attachment dicts with 'name' and 'content'
+        
+    Returns:
+        Content with sanitized attachments appended
+    """
+    if not attachments:
+        return content
+    
+    full_content = content
+    for attachment in attachments:
+        name = sanitize_attachment_name(attachment.get("name", "Unknown File"))
+        file_content = sanitize_attachment_content(attachment.get("content", ""))
+        full_content += f"\n\n---\n**Attached File:** {name}\n\n```\n{file_content}\n```\n---"
+    
+    return full_content
+
+
+def is_clarification_response(messages: List[Dict]) -> bool:
+    """
+    Determine if the latest user message is a response to a clarification request.
+    
+    The pattern we're looking for is:
+    [..., user_msg, assistant_clarification, user_response]
+    where the second-to-last message is an assistant message with 'clarification' key.
+    
+    Args:
+        messages: Full conversation message list
+        
+    Returns:
+        True if this appears to be a response to a clarification
+    """
+    if len(messages) < 2:
+        return False
+    
+    # The second-to-last message should be the assistant's clarification
+    # (the last message is the current user message)
+    second_to_last = messages[-2]
+    
+    return (
+        second_to_last is not None 
+        and second_to_last.get('role') == 'assistant'
+        and 'clarification' in second_to_last
+    )
+
+
+# ============================================================================
+# Pydantic Schemas
+# ============================================================================
+
 from .schemas import (
     CreateConversationRequest, 
     SendMessageRequest, 
@@ -30,18 +143,33 @@ app = FastAPI(title="LLM Council API")
 # Enable CORS for local development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173", "http://127.0.0.1:3000"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:3000"
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "Accept"],
 )
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request, exc):
-    print(f"Global exception: {str(exc)}")
+    """Global exception handler that sanitizes error responses."""
+    # Log full details server-side for debugging
+    logger.error(
+        f"Unhandled exception on {request.url.path}: {exc}",
+        exc_info=True
+    )
+    
+    # Return sanitized message to client (never expose internal details)
     return JSONResponse(
         status_code=500,
-        content={"message": "Internal Server Error", "detail": str(exc)},
+        content={
+            "message": "Internal Server Error",
+            "detail": "An unexpected error occurred. Please try again later."
+        },
     )
 
 
@@ -304,13 +432,8 @@ async def send_message(conversation_id: str, request: SendMessageRequest):
     # Check if this is the first message
     is_first_message = len(conversation["messages"]) == 0
 
-    # Process attachments if present
-    full_content = request.content
-    if request.attachments:
-        for attachment in request.attachments:
-            name = attachment.get("name", "Unknown File")
-            content = attachment.get("content", "")
-            full_content += f"\n\n---\n**Attached File:** {name}\n\n```\n{content}\n```\n---"
+    # Process attachments with sanitization (SEC-002)
+    full_content = process_attachments(request.content, request.attachments)
 
     # Add user message
     storage.add_user_message(conversation_id, full_content)
@@ -329,9 +452,8 @@ async def send_message(conversation_id: str, request: SendMessageRequest):
         request.content
     )
 
-    # Check for clarification needs
-    last_assistant_msg = next((m for m in reversed(updated_conversation["messages"][:-1]) if m['role'] == 'assistant'), None)
-    is_clarification_answer = last_assistant_msg and 'clarification' in last_assistant_msg
+    # Check for clarification needs using improved detection (BUG-002)
+    is_clarification_answer = is_clarification_response(updated_conversation["messages"])
     
     if not is_clarification_answer:
         questions = await check_clarification_needs(request.content)
@@ -390,13 +512,8 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
 
     async def event_generator():
         try:
-            # Process attachments if present
-            full_content = request.content
-            if request.attachments:
-                for attachment in request.attachments:
-                    name = attachment.get("name", "Unknown File")
-                    content = attachment.get("content", "")
-                    full_content += f"\n\n---\n**Attached File:** {name}\n\n```\n{content}\n```\n---"
+            # Process attachments with sanitization (SEC-002)
+            full_content = process_attachments(request.content, request.attachments)
 
             # Add user message
             storage.add_user_message(conversation_id, full_content)
@@ -415,12 +532,10 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
                 request.content
             )
 
-            # Check for clarification needs ONLY if this is not a response to a clarification
-            # Heuristic: If the last assistant message had 'clarification', we treat this user message as the answer
-            last_assistant_msg = next((m for m in reversed(messages[:-1]) if m['role'] == 'assistant'), None)
-            is_clarification_answer = last_assistant_msg and 'clarification' in last_assistant_msg
+            # Check for clarification needs using improved detection (BUG-002)
+            is_clarification_answer = is_clarification_response(messages)
             
-            should_check_clarification = not is_clarification_answer and len(request.content) < 2000 # Increased limit significantly
+            should_check_clarification = not is_clarification_answer and len(request.content) < 2000
 
             if should_check_clarification:
                 questions = await check_clarification_needs(request.content)

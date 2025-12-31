@@ -320,44 +320,77 @@ Now provide your evaluation and ranking:"""
     print("All ranking tasks completed.")
     responses = {model: response for model, response in zip(council_models, responses_list)}
 
-    # Format results
-    stage2_results = []
-    for model, response in responses.items():
+    # =========================================================================
+    # BUG-003 FIX: Parallelize LLM extraction fallback
+    # Instead of awaiting inside a loop, we collect all extraction tasks first
+    # =========================================================================
+    
+    # First pass: parse all rankings and identify which need LLM extraction
+    preliminary_results = []
+    extraction_tasks = []
+    extraction_indices = []
+    
+    for idx, (model, response) in enumerate(responses.items()):
         if response is not None:
             full_text = response.get('content', '')
-            
-            # Step 1: Try regex parsing
             parsed = parse_ranking_from_text(full_text)
             
-            # Step 2: Fallback to LLM extraction if regex failed to find all responses
-            # We expect parsed to have the same number of items as stage1_results
-            # Only run extraction if there is actual content and no error
-            if not response.get('error') and len(parsed) < len(stage1_results):
-                llm_parsed = await extract_ranking_with_llm(full_text, labels)
-                if len(llm_parsed) >= len(parsed):
-                    parsed = llm_parsed
-
-            usage = response.get('usage', {})
-            cost = calculate_cost(
-                model,
-                usage.get('prompt_tokens', 0),
-                usage.get('completion_tokens', 0)
+            # Queue LLM extraction if needed (don't await yet!)
+            needs_extraction = (
+                not response.get('error') 
+                and len(parsed) < len(stage1_results)
+                and full_text.strip()  # Only if there's actual content
             )
+            
+            if needs_extraction:
+                extraction_tasks.append(extract_ranking_with_llm(full_text, labels))
+                extraction_indices.append(idx)
+            
+            preliminary_results.append({
+                'model': model,
+                'response': response,
+                'parsed': parsed
+            })
+    
+    # Run all LLM extractions in parallel (not sequentially!)
+    if extraction_tasks:
+        print(f"Running {len(extraction_tasks)} LLM extraction tasks in parallel...")
+        extraction_results = await asyncio.gather(*extraction_tasks)
+        
+        # Apply extraction results back to preliminary results
+        for task_idx, result_idx in enumerate(extraction_indices):
+            llm_parsed = extraction_results[task_idx]
+            if len(llm_parsed) >= len(preliminary_results[result_idx]['parsed']):
+                preliminary_results[result_idx]['parsed'] = llm_parsed
+    
+    # Build final stage2_results
+    stage2_results = []
+    for item in preliminary_results:
+        model = item['model']
+        response = item['response']
+        parsed = item['parsed']
+        
+        usage = response.get('usage', {})
+        cost = calculate_cost(
+            model,
+            usage.get('prompt_tokens', 0),
+            usage.get('completion_tokens', 0)
+        )
 
-            result_entry = {
-                "model": model,
-                "ranking": full_text,
-                "thinking": response.get('thinking', ''),
-                "is_reasoning_model": response.get('is_reasoning_model', False),
-                "parsed_ranking": parsed,
-                "usage": usage,
-                "cost": cost
-            }
+        result_entry = {
+            "model": model,
+            "ranking": response.get('content', ''),
+            "thinking": response.get('thinking', ''),
+            "is_reasoning_model": response.get('is_reasoning_model', False),
+            "parsed_ranking": parsed,
+            "usage": usage,
+            "cost": cost
+        }
 
-            if response.get('error'):
-                result_entry['error'] = response['error']
+        if response.get('error'):
+            result_entry['error'] = response['error']
 
-            stage2_results.append(result_entry)
+        stage2_results.append(result_entry)
 
     return stage2_results, label_to_model
 
@@ -382,36 +415,30 @@ async def stage2_5_rebuttal(
     Returns:
         List of updated stage1-like results (or original if no update)
     """
-    # Create mapping of model -> critique text received
-    model_critiques = {result['model']: [] for result in stage1_results}
+    # =========================================================================
+    # BUG-005 FIX: Avoid O(n²) memory by not duplicating full critique text
+    # Instead of storing full text per model, we combine once and share
+    # =========================================================================
     
-    # Invert the rankings to gather critiques FOR each model
-    # stage2_results contains what each model SAID about others
-    for ranking_result in stage2_results:
-        reviewer_model = ranking_result['model']
-        critique_text = ranking_result['ranking']
-        
-        # We need to extract the specific critique for each model if possible
-        # Since the full text contains all critiques, we'll just pass the full text 
-        # and let the model find the section about itself.
-        # Ideally, we would parse this better, but passing full context is safer.
-        for label, target_model in label_to_model.items():
-            if target_model in model_critiques:
-                model_critiques[target_model].append(
-                    f"Critique from Peer ({reviewer_model}):\n{critique_text}"
-                )
+    # Collect all critiques once (each critique stored only once)
+    all_critiques_text = "\n\n---\n\n".join([
+        f"Critique from Peer ({ranking_result['model']}):\n{ranking_result['ranking']}"
+        for ranking_result in stage2_results
+    ])
+    
+    # All models receive the same combined critiques (shared reference, O(n) not O(n²))
 
     # Prepare rebuttal tasks
     tasks = []
     participating_models = []
 
+    # Skip if no critiques available
+    if not all_critiques_text.strip():
+        return stage1_results
+
     for result in stage1_results:
         model = result['model']
         original_response = result['response']
-        critiques = "\n\n---\n\n".join(model_critiques.get(model, []))
-        
-        if not critiques:
-            continue
 
         participating_models.append(model)
         
@@ -427,7 +454,7 @@ Your Original Answer:
 
 ---
 PEER REVIEWS AND RANKINGS:
-{critiques}
+{all_critiques_text}
 ---
 
 Your Task:
@@ -810,8 +837,13 @@ async def run_full_council(
     Returns:
         Tuple of (stage1_results, stage2_results, stage3_result, metadata)
     """
-    # Extract the latest user query for Stage 2 and 3 context
-    user_query = messages[-1]['content'] if messages else ""
+    # BUG-004 FIX: Safely extract the latest user query
+    # Find the last user message (not necessarily the absolute last message)
+    user_query = ""
+    for msg in reversed(messages):
+        if msg.get('role') == 'user':
+            user_query = msg.get('content', '')
+            break
 
     # Stage 1: Collect individual responses
     stage1_results = await stage1_collect_responses(messages, council_models, model_personas)

@@ -30,15 +30,23 @@ def is_reasoning_model(model_id: str) -> bool:
     Returns:
         True if the model uses extended reasoning
     """
-    # Check exact match
+    # Check exact match first
     if model_id in REASONING_MODELS:
         return True
 
-    # Check partial matches (for versioned models)
     model_lower = model_id.lower()
-    reasoning_keywords = ['o1', 'o3', 'deepseek-r', 'reasoner', 'reasoning']
 
-    return any(keyword in model_lower for keyword in reasoning_keywords)
+    # Use word boundary patterns to avoid false positives
+    # e.g., 'vector-01' should NOT match 'o1', but 'openai/o1' should
+    reasoning_patterns = [
+        r'(?:^|/)o1(?:-|$|:)',      # Matches "o1", "o1-preview", but not "vector-01"
+        r'(?:^|/)o3(?:-|$|:)',      # Matches "o3", "o3-mini", but not "ao3"
+        r'deepseek-r',              # DeepSeek reasoning models (deepseek-r1, etc.)
+        r'(?:^|/)reasoner(?:-|$)',  # Reasoner models
+        r'-reasoning(?:-|$)',       # Models with reasoning in name
+    ]
+
+    return any(re.search(pattern, model_lower) for pattern in reasoning_patterns)
 
 
 def get_model_timeout(model_id: str) -> float:

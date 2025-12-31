@@ -1,11 +1,35 @@
-"""JSON-based storage for conversations."""
+"""JSON-based storage for conversations with thread-safe file locking."""
 
 import json
 import os
+import threading
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 from pathlib import Path
 from .config import DATA_DIR
+
+
+# Thread-safe locking mechanism for conversation files
+_file_locks: Dict[str, threading.Lock] = {}
+_lock_mutex = threading.Lock()
+
+
+def _get_file_lock(conversation_id: str) -> threading.Lock:
+    """
+    Get or create a lock for a specific conversation.
+    
+    This ensures thread-safe access to individual conversation files.
+    """
+    with _lock_mutex:
+        if conversation_id not in _file_locks:
+            _file_locks[conversation_id] = threading.Lock()
+        return _file_locks[conversation_id]
+
+
+def _cleanup_lock(conversation_id: str) -> None:
+    """Remove a lock when a conversation is deleted."""
+    with _lock_mutex:
+        _file_locks.pop(conversation_id, None)
 
 
 def ensure_data_dir():
@@ -142,16 +166,19 @@ def add_user_message(conversation_id: str, content: str):
         conversation_id: Conversation identifier
         content: User message content
     """
-    conversation = get_conversation(conversation_id)
-    if conversation is None:
-        raise ValueError(f"Conversation {conversation_id} not found")
+    lock = _get_file_lock(conversation_id)
+    
+    with lock:
+        conversation = get_conversation(conversation_id)
+        if conversation is None:
+            raise ValueError(f"Conversation {conversation_id} not found")
 
-    conversation["messages"].append({
-        "role": "user",
-        "content": content
-    })
+        conversation["messages"].append({
+            "role": "user",
+            "content": content
+        })
 
-    save_conversation(conversation)
+        save_conversation(conversation)
 
 
 def add_assistant_message(
@@ -173,28 +200,31 @@ def add_assistant_message(
         metadata: Optional metadata (rankings, mappings, etc.)
         clarification: Optional list of clarifying questions
     """
-    conversation = get_conversation(conversation_id)
-    if conversation is None:
-        raise ValueError(f"Conversation {conversation_id} not found")
-
-    message = {
-        "role": "assistant"
-    }
+    lock = _get_file_lock(conversation_id)
     
-    if clarification:
-        message["clarification"] = clarification
-    else:
-        message["stage1"] = stage1
-        message["stage2"] = stage2
-        message["stage3"] = stage3
+    with lock:
+        conversation = get_conversation(conversation_id)
+        if conversation is None:
+            raise ValueError(f"Conversation {conversation_id} not found")
 
-    
-    if metadata:
-        message["metadata"] = metadata
+        message = {
+            "role": "assistant"
+        }
+        
+        if clarification:
+            message["clarification"] = clarification
+        else:
+            message["stage1"] = stage1
+            message["stage2"] = stage2
+            message["stage3"] = stage3
 
-    conversation["messages"].append(message)
+        
+        if metadata:
+            message["metadata"] = metadata
 
-    save_conversation(conversation)
+        conversation["messages"].append(message)
+
+        save_conversation(conversation)
 
 
 def update_conversation_title(conversation_id: str, title: str):
@@ -205,12 +235,15 @@ def update_conversation_title(conversation_id: str, title: str):
         conversation_id: Conversation identifier
         title: New title for the conversation
     """
-    conversation = get_conversation(conversation_id)
-    if conversation is None:
-        raise ValueError(f"Conversation {conversation_id} not found")
+    lock = _get_file_lock(conversation_id)
+    
+    with lock:
+        conversation = get_conversation(conversation_id)
+        if conversation is None:
+            raise ValueError(f"Conversation {conversation_id} not found")
 
-    conversation["title"] = title
-    save_conversation(conversation)
+        conversation["title"] = title
+        save_conversation(conversation)
 
 
 def delete_conversation(conversation_id: str) -> bool:
@@ -223,8 +256,12 @@ def delete_conversation(conversation_id: str) -> bool:
     Returns:
         True if deleted, False if not found
     """
-    path = get_conversation_path(conversation_id)
-    if os.path.exists(path):
-        os.remove(path)
-        return True
-    return False
+    lock = _get_file_lock(conversation_id)
+    
+    with lock:
+        path = get_conversation_path(conversation_id)
+        if os.path.exists(path):
+            os.remove(path)
+            _cleanup_lock(conversation_id)
+            return True
+        return False
