@@ -33,26 +33,93 @@ export default function Settings({
     }
   }, [isOpen]);
 
+  // Current version of default presets - increment when adding new defaults
+  const PRESETS_VERSION = 2;
+
+  const getDefaultPresets = () => [
+    {
+      name: 'The Big Three',
+      councilModels: ['openai/gpt-4o', 'anthropic/claude-3.5-sonnet', 'google/gemini-2.0-flash-001'],
+      chairmanModel: 'google/gemini-2.0-flash-001',
+      isDefault: true
+    },
+    {
+      name: 'Fast & Cheap',
+      councilModels: ['openai/gpt-4o-mini', 'anthropic/claude-3-haiku', 'google/gemini-2.0-flash-lite-001'],
+      chairmanModel: 'google/gemini-2.0-flash-lite-001',
+      isDefault: true
+    },
+    {
+      name: 'Premium Council',
+      councilModels: ['openai/o1', 'anthropic/claude-3.5-sonnet', 'google/gemini-2.5-pro-preview-06-05', 'x-ai/grok-3-beta'],
+      chairmanModel: 'anthropic/claude-3.5-sonnet',
+      isDefault: true
+    },
+    {
+      name: 'Reasoning Masters',
+      councilModels: ['openai/o1', 'deepseek/deepseek-r1', 'google/gemini-2.5-flash-preview-05-20'],
+      chairmanModel: 'openai/o1',
+      isDefault: true
+    },
+    {
+      name: 'Open Source Alliance',
+      councilModels: ['deepseek/deepseek-chat', 'meta-llama/llama-3.3-70b-instruct', 'qwen/qwen-2.5-72b-instruct'],
+      chairmanModel: 'deepseek/deepseek-chat',
+      isDefault: true
+    },
+    {
+      name: 'Balanced Mix',
+      councilModels: ['openai/gpt-4o', 'anthropic/claude-3.5-sonnet', 'deepseek/deepseek-chat', 'google/gemini-2.0-flash-001', 'x-ai/grok-3-mini-beta'],
+      chairmanModel: 'anthropic/claude-3.5-sonnet',
+      isDefault: true
+    },
+    {
+      name: 'Speed Demon',
+      councilModels: ['openai/gpt-4o-mini', 'anthropic/claude-3-haiku', 'google/gemini-2.0-flash-lite-001', 'x-ai/grok-3-mini-beta'],
+      chairmanModel: 'google/gemini-2.0-flash-lite-001',
+      isDefault: true
+    },
+    {
+      name: 'Code Council',
+      councilModels: ['anthropic/claude-3.5-sonnet', 'deepseek/deepseek-chat', 'openai/gpt-4o', 'google/gemini-2.5-pro-preview-06-05'],
+      chairmanModel: 'anthropic/claude-3.5-sonnet',
+      isDefault: true
+    },
+    {
+      name: 'Creative Writers',
+      councilModels: ['anthropic/claude-3.5-sonnet', 'openai/gpt-4o', 'google/gemini-2.0-flash-001', 'x-ai/grok-3-beta'],
+      chairmanModel: 'anthropic/claude-3.5-sonnet',
+      isDefault: true
+    },
+    {
+      name: 'Budget Friendly',
+      councilModels: ['deepseek/deepseek-chat', 'google/gemini-2.0-flash-lite-001', 'openai/gpt-4o-mini'],
+      chairmanModel: 'deepseek/deepseek-chat',
+      isDefault: true
+    }
+  ];
+
   const loadPresets = () => {
     const savedPresets = localStorage.getItem('llm-council-presets');
-    if (savedPresets) {
+    const savedVersion = localStorage.getItem('llm-council-presets-version');
+    const defaultPresets = getDefaultPresets();
+
+    if (savedPresets && savedVersion === String(PRESETS_VERSION)) {
+      // Same version, use saved presets as-is
       setPresets(JSON.parse(savedPresets));
+    } else if (savedPresets) {
+      // Version mismatch - merge: keep user presets, update defaults
+      const existing = JSON.parse(savedPresets);
+      const userPresets = existing.filter(p => !p.isDefault);
+      const merged = [...defaultPresets, ...userPresets];
+      setPresets(merged);
+      localStorage.setItem('llm-council-presets', JSON.stringify(merged));
+      localStorage.setItem('llm-council-presets-version', String(PRESETS_VERSION));
     } else {
-      // Default presets
-      const defaultPresets = [
-        {
-          name: 'The Big Three',
-          councilModels: ['openai/gpt-4o', 'anthropic/claude-3-5-sonnet', 'google/gemini-1.5-pro'],
-          chairmanModel: 'google/gemini-1.5-pro'
-        },
-        {
-          name: 'Fast & Cheap',
-          councilModels: ['openai/gpt-4o-mini', 'anthropic/claude-3-haiku', 'google/gemini-1.5-flash'],
-          chairmanModel: 'google/gemini-1.5-flash'
-        }
-      ];
+      // Fresh install
       setPresets(defaultPresets);
       localStorage.setItem('llm-council-presets', JSON.stringify(defaultPresets));
+      localStorage.setItem('llm-council-presets-version', String(PRESETS_VERSION));
     }
   };
 
