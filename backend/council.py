@@ -299,9 +299,9 @@ IMPORTANT: Your final ranking MUST be formatted EXACTLY as follows:
 
 JSON Format:
 ```json
-{
+{{
   "ranking": ["Response C", "Response A", "Response B"]
-}
+}}
 ```
 
 The "ranking" list must contain the response labels in order from best to worst.
@@ -777,11 +777,16 @@ async def get_council_config(
     from .config import COUNCIL_MODELS, CHAIRMAN_MODEL
     from . import storage
 
-    # Force use of global config to avoid "poisoned" conversations with invalid models
-    council_models = COUNCIL_MODELS
-    chairman_model = CHAIRMAN_MODEL
-    # council_models = conversation.get("council_models", COUNCIL_MODELS)
-    # chairman_model = conversation.get("chairman_model", CHAIRMAN_MODEL)
+    # Use conversation-specific models if available, fallback to global config
+    council_models = conversation.get("council_models", COUNCIL_MODELS)
+    chairman_model = conversation.get("chairman_model", CHAIRMAN_MODEL)
+    
+    # Validate models - if empty or invalid, use global config
+    if not council_models or not isinstance(council_models, list) or len(council_models) == 0:
+        council_models = COUNCIL_MODELS
+    if not chairman_model or not isinstance(chairman_model, str):
+        chairman_model = CHAIRMAN_MODEL
+    
     model_personas = conversation.get("model_personas", {})
     mode = conversation.get("mode", "standard")
 

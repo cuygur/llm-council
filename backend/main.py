@@ -13,7 +13,7 @@ from . import storage
 from . import config
 from .openrouter import fetch_available_models
 from .openrouter import fetch_available_models
-from .council import run_full_council, generate_conversation_title, stage1_collect_responses, stage2_collect_rankings, stage2_5_rebuttal, stage3_synthesize_final, calculate_aggregate_rankings, check_clarification_needs
+from .council import run_full_council, generate_conversation_title, stage1_collect_responses, stage2_collect_rankings, stage2_5_rebuttal, stage3_synthesize_final, calculate_aggregate_rankings, check_clarification_needs, get_council_config
 from .export import export_to_markdown, export_to_json, export_to_html
 from .pricing import estimate_query_cost, format_cost
 from .schemas import (
