@@ -41,6 +41,18 @@ MODEL_PRICING = {
         "prompt": 0.00,  # Free model
         "completion": 0.00,
     },
+    "google/gemini-2.0-flash-exp:free": {
+        "prompt": 0.00,
+        "completion": 0.00,
+    },
+    "meta-llama/llama-3.3-70b-instruct:free": {
+        "prompt": 0.00,
+        "completion": 0.00,
+    },
+    "qwen/qwen-2.5-72b-instruct:free": {
+        "prompt": 0.00,
+        "completion": 0.00,
+    },
 }
 
 # Default pricing for unknown models

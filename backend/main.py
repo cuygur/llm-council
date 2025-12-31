@@ -317,6 +317,24 @@ async def get_available_models():
             "name": "DeepSeek V3.1 Nex-N1 (Free)",
             "provider": "Nex-AGI",
             "description": "Free enhanced DeepSeek model"
+        },
+        {
+            "id": "google/gemini-2.0-flash-exp:free",
+            "name": "Gemini 2.0 Flash Exp (Free)",
+            "provider": "Google",
+            "description": "Free experimental Gemini model"
+        },
+        {
+            "id": "meta-llama/llama-3.3-70b-instruct:free",
+            "name": "Llama 3.3 70B (Free)",
+            "provider": "Meta",
+            "description": "Free open source Llama model"
+        },
+        {
+            "id": "qwen/qwen-2.5-72b-instruct:free",
+            "name": "Qwen 2.5 72B (Free)",
+            "provider": "Qwen",
+            "description": "Free open source Qwen model"
         }
     ]
 

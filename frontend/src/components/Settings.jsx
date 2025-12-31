@@ -34,7 +34,7 @@ export default function Settings({
   }, [isOpen]);
 
   // Current version of default presets - increment when adding new defaults
-  const PRESETS_VERSION = 3;
+  const PRESETS_VERSION = 4;
 
   const getDefaultPresets = () => [
     {
@@ -95,6 +95,12 @@ export default function Settings({
       name: 'Budget Friendly',
       councilModels: ['nex-agi/deepseek-v3.1-nex-n1:free', 'google/gemini-3-flash-preview', 'x-ai/grok-4.1-fast'],
       chairmanModel: 'nex-agi/deepseek-v3.1-nex-n1:free',
+      isDefault: true
+    },
+    {
+      name: 'The Free Tier',
+      councilModels: ['nex-agi/deepseek-v3.1-nex-n1:free', 'google/gemini-2.0-flash-exp:free', 'meta-llama/llama-3.3-70b-instruct:free', 'qwen/qwen-2.5-72b-instruct:free'],
+      chairmanModel: 'meta-llama/llama-3.3-70b-instruct:free',
       isDefault: true
     }
   ];
