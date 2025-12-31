@@ -26,17 +26,16 @@ if not OPENROUTER_API_KEY.startswith("sk-"):
 
 # Council members - list of OpenRouter model identifiers
 COUNCIL_MODELS = [
-    "openai/gpt-4o",
-    "google/gemini-flash-1.5",
-    "anthropic/claude-3.5-sonnet",
-    "meta-llama/llama-3.1-70b-instruct",
+    "openai/gpt-5.2",
+    "anthropic/claude-sonnet-4.5",
+    "google/gemini-3-pro-preview",
 ]
 
 # Chairman model - synthesizes final response
-CHAIRMAN_MODEL = "openai/gpt-4o"
+CHAIRMAN_MODEL = "google/gemini-3-pro-preview"
 
 # Default council mode
-DEFAULT_MODE = "standard"
+DEFAULT_MODE = "auto"
 
 # OpenRouter API endpoint
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"

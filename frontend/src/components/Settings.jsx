@@ -15,7 +15,7 @@ export default function Settings({
   const [councilModels, setCouncilModels] = useState([]);
   const [chairmanModel, setChairmanModel] = useState('');
   const [modelPersonas, setModelPersonas] = useState({});
-  const [mode, setMode] = useState('standard');
+  const [mode, setMode] = useState('auto');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -161,7 +161,7 @@ export default function Settings({
       // If we are starting a new conversation, we might want to default to the current config
       setCouncilModels(configData.council_models);
       setChairmanModel(configData.chairman_model);
-      setMode(configData.mode || 'standard');
+      setMode(configData.mode || 'auto');
     } catch (err) {
       setError('Failed to load settings: ' + err.message);
     } finally {
