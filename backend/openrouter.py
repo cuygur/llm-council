@@ -107,6 +107,9 @@ async def query_model(
                     else:
                         response.raise_for_status()
 
+                if response.status_code == 400:
+                    print(f"400 Bad Request for {model}. Payload: {json.dumps(payload, indent=2)}")
+
                 response.raise_for_status()
 
                 data = response.json()
@@ -173,6 +176,11 @@ async def query_model(
         except httpx.HTTPStatusError as e:
             # This catches raise_for_status()
             print(f"HTTP error querying model {model}: {e}")
+            try:
+                print(f"Error Response Content: {e.response.text}")
+            except:
+                pass
+
             if attempt < retries and e.response.status_code == 429:
                  # Should have been handled above, but just in case
                  wait_time = base_delay * (2 ** attempt)

@@ -28,9 +28,12 @@ async def stage1_collect_responses(
     # Create tasks for each model
     tasks = []
     
+    # Prepare clean history once
+    base_messages = prepare_api_messages(messages)
+    
     for model in council_models:
         # Clone messages to avoid modifying the original list for other models
-        model_messages = list(messages)
+        model_messages = list(base_messages)
         
         # Inject persona if available
         if model_personas and model in model_personas:
@@ -76,6 +79,34 @@ async def stage1_collect_responses(
             stage1_results.append(result_entry)
 
     return stage1_results
+
+
+def prepare_api_messages(msgs: List[Dict[str, Any]]) -> List[Dict[str, str]]:
+    """
+    Sanitize and format messages for the LLM API.
+    Handles internal storage formats like 'clarification' and 'stage3' results.
+    """
+    api_msgs = []
+    for msg in msgs:
+        clean_msg = {"role": msg.get("role", "user")}
+        
+        content = msg.get("content")
+        
+        # Handle structured assistant messages
+        if msg.get("role") == "assistant":
+            # priority 1: stage3 response (final council answer)
+            if msg.get("stage3") and isinstance(msg["stage3"], dict):
+                content = msg["stage3"].get("response", "")
+            # priority 2: clarification
+            elif msg.get("clarification") and isinstance(msg["clarification"], list):
+                content = "I need clarification on the following points:\n" + "\n".join(f"- {q}" for q in msg["clarification"])
+        
+        # If content is still None/empty, skip this message to avoid API errors
+        if content:
+            clean_msg["content"] = content
+            api_msgs.append(clean_msg)
+            
+    return api_msgs
 
 
 async def check_clarification_needs(user_query: str) -> List[str]:
